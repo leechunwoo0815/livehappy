@@ -8,7 +8,7 @@ from app.database import engine
 from app.elasticsearch import close_elasticsearch, init_elasticsearch
 from app.kafka import close_kafka, init_kafka
 from app.redis import close_redis, init_redis
-from app.routers import auth, listings, users
+from app.routers import auth, bookings, listings, users
 
 
 @asynccontextmanager
@@ -40,6 +40,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["认证"])
 app.include_router(users.router, prefix="/users", tags=["用户"])
 app.include_router(listings.router, prefix="/listings", tags=["房源"])
+app.include_router(bookings.router, prefix="/bookings", tags=["预订"])
 
 
 @app.get("/")
