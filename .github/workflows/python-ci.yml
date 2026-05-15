@@ -1,0 +1,40 @@
+name: Python CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+        working-directory: backend
+
+      - name: Ruff check
+        run: ruff check .
+        working-directory: backend
+
+      - name: Ruff format check
+        run: ruff format --check .
+        working-directory: backend
+
+      - name: Test
+        run: pytest -q
+        working-directory: backend

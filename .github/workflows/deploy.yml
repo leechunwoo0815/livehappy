@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+jobs:
+  build-and-push:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & Push backend
+        run: |
+          docker build -f docker/Dockerfile.backend \
+            -t ${{ secrets.ACR_REGISTRY }}/stayhub-backend:${{ github.sha }} \
+            -t ${{ secrets.ACR_REGISTRY }}/stayhub-backend:latest \
+            backend
+          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/stayhub-backend
+
+      - name: Build & Push frontend
+        run: |
+          docker build -f frontend/Dockerfile \
+            -t ${{ secrets.ACR_REGISTRY }}/stayhub-frontend:${{ github.sha }} \
+            -t ${{ secrets.ACR_REGISTRY }}/stayhub-frontend:latest \
+            frontend
+          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/stayhub-frontend
