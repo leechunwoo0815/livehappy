@@ -8,7 +8,7 @@ from app.database import engine
 from app.elasticsearch import close_elasticsearch, init_elasticsearch
 from app.kafka import close_kafka, init_kafka
 from app.redis import close_redis, init_redis
-from app.routers import auth, bookings, listings, users
+from app.routers import ai, auth, bookings, listings, messages, reviews, social, users
 
 
 @asynccontextmanager
@@ -41,6 +41,10 @@ app.include_router(auth.router, prefix="/auth", tags=["认证"])
 app.include_router(users.router, prefix="/users", tags=["用户"])
 app.include_router(listings.router, prefix="/listings", tags=["房源"])
 app.include_router(bookings.router, prefix="/bookings", tags=["预订"])
+app.include_router(messages.router, prefix="/messages", tags=["消息"])
+app.include_router(social.router, prefix="/social", tags=["社交"])
+app.include_router(reviews.router, prefix="/reviews", tags=["评价"])
+app.include_router(ai.router, prefix="/ai", tags=["AI"])
 
 
 @app.get("/")
