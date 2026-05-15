@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用户管理 — 开心住 LiveHappy 管理后台</title>
+<link rel="stylesheet" href="/css/system.css">
+<script src="/js/htmx.min.js"></script>
+<script src="/js/alpine.min.js" defer></script>
+<script src="/js/app.js"></script>
+<style>
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - var(--nav-height))}
+@media(max-width:1023px){.admin-layout{grid-template-columns:1fr}}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:var(--space-4)}
+@media(max-width:1023px){.sidebar{display:none}}
+.sidebar-item{display:flex;align-items:center;gap:var(--space-3);padding:10px 12px;border-radius:var(--radius-md);font-size:0.9375rem;color:var(--fg-secondary);transition:all var(--transition-fast);cursor:pointer}
+.sidebar-item:hover{background:var(--surface-hover);color:var(--fg)}
+.sidebar-item.active{background:var(--accent-subtle);color:var(--accent);font-weight:500}
+.sidebar-item svg{width:20px;height:20px}
+.admin-main{padding:var(--space-8);overflow-y:auto}
+@media(max-width:640px){.admin-main{padding:var(--space-4)}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a></div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white);cursor:pointer">管</div>
+    </div>
+  </div>
+</nav>
+
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      仪表盘
+    </div>
+    <div class="sidebar-item" onclick="window.location.href='listings.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      房源管理
+      <span class="badge badge-warning" style="margin-left:auto;font-size:0.6875rem;padding:1px 6px">12</span>
+    </div>
+    <div class="sidebar-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+      用户管理
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="flex items-center justify-between mb-6">
+      <h1>用户管理</h1>
+      <div class="flex gap-2">
+        <input type="text" class="input" placeholder="搜索用户名/邮箱/手机..." style="width:280px;font-size:0.875rem;padding:8px 12px">
+        <select class="input" style="width:auto;font-size:0.875rem;padding:6px 30px 6px 12px">
+          <option>全部用户</option>
+          <option>普通用户</option>
+          <option>房东</option>
+          <option>管理员</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card p-0">
+      <div class="table-wrap" style="border:none">
+        <table>
+          <thead>
+            <tr><th style="width:30px"><input type="checkbox" style="accent-color:var(--accent)"></th><th>用户</th><th>角色</th><th>注册时间</th><th>订单数</th><th>房源数</th><th>状态</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
+              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">李</div><div><div style="font-weight:500;font-size:0.875rem">李明</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">li.ming@email.com</div></div></div></td>
+              <td><span class="badge badge-accent">普通用户</span></td>
+              <td style="font-size:0.875rem">2025-08-15</td>
+              <td>12</td>
+              <td>0</td>
+              <td><span class="badge badge-success">正常</span></td>
+              <td><button class="btn btn-ghost btn-sm">详情</button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
+              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white)">张</div><div><div style="font-weight:500;font-size:0.875rem">张先生</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">zhang@email.com</div></div></div></td>
+              <td><span class="badge badge-secondary">房东</span></td>
+              <td style="font-size:0.875rem">2019-03-20</td>
+              <td>86</td>
+              <td>3</td>
+              <td><span class="badge badge-success">正常</span></td>
+              <td><button class="btn btn-ghost btn-sm">详情</button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
+              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary)">王</div><div><div style="font-weight:500;font-size:0.875rem">王晓</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">wangxiao@email.com</div></div></div></td>
+              <td><span class="badge badge-accent">普通用户</span></td>
+              <td style="font-size:0.875rem">2025-11-02</td>
+              <td>5</td>
+              <td>0</td>
+              <td><span class="badge badge-success">正常</span></td>
+              <td><button class="btn btn-ghost btn-sm">详情</button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
+              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--success-subtle);color:var(--success)">陈</div><div><div style="font-weight:500;font-size:0.875rem">陈先生</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">chen@email.com</div></div></div></td>
+              <td><span class="badge badge-secondary">房东</span></td>
+              <td style="font-size:0.875rem">2020-06-10</td>
+              <td>45</td>
+              <td>2</td>
+              <td><span class="badge badge-success">正常</span></td>
+              <td><button class="btn btn-ghost btn-sm">详情</button></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
+              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--danger-subtle);color:var(--danger)">赵</div><div><div style="font-weight:500;font-size:0.875rem">赵六</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">zhao@email.com</div></div></div></td>
+              <td><span class="badge badge-accent">普通用户</span></td>
+              <td style="font-size:0.875rem">2026-01-05</td>
+              <td>1</td>
+              <td>0</td>
+              <td><span class="badge badge-danger">已封禁</span></td>
+              <td><button class="btn btn-ghost btn-sm">详情</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mt-4">
+      <span class="text-small">显示 1-5 / 共 12,480 位用户</span>
+      <div class="flex gap-2">
+        <button class="btn btn-outline btn-sm">上一页</button>
+        <button class="btn btn-primary btn-sm">1</button>
+        <button class="btn btn-outline btn-sm">2</button>
+        <button class="btn btn-outline btn-sm">3</button>
+        <button class="btn btn-outline btn-sm">下一页</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+</script>
+</body>
+</html>

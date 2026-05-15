@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>西湖畔·湖景精品酒店 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="/css/system.css">
+<script src="/js/htmx.min.js"></script>
+<script src="/js/alpine.min.js" defer></script>
+<script src="/js/app.js"></script>
+<style>
+.detail-grid{display:grid;grid-template-columns:1fr 380px;gap:var(--space-8);align-items:start}
+@media(max-width:1023px){.detail-grid{grid-template-columns:1fr}}
+.detail-sidebar{position:sticky;top:calc(var(--nav-height) + var(--space-6))}
+@media(max-width:1023px){.detail-sidebar{position:static}}
+.amenities{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)}
+@media(max-width:480px){.amenities{grid-template-columns:1fr}}
+.amenity-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;font-size:0.9375rem;color:var(--fg)}
+.amenity-item svg{width:20px;height:20px;color:var(--fg-secondary);flex-shrink:0}
+.booking-card{border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-6);background:var(--surface);box-shadow:var(--shadow-md)}
+.booking-card .price{font-size:1.5rem;font-weight:600;font-family:var(--font-display);letter-spacing:-0.02em}
+.booking-card .price small{font-size:1rem;font-weight:400;color:var(--fg-secondary)}
+.date-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.date-grid .input{border-radius:var(--radius-md);text-align:center;font-size:0.875rem}
+.review-item{padding:var(--space-5) 0;border-bottom:1px solid var(--border-light)}
+.review-item:last-child{border-bottom:none}
+.host-card{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/index.html" class="nav-brand">
+      <span class="nav-brand-icon">K</span>
+      开心住
+    </a>
+    <div class="nav-links">
+      <a href="search.html" class="nav-link active">搜索房源</a>
+      <a href="/screens/bookings/list.html" class="nav-link">我的订单</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div class="gallery mb-8 fade-in">
+      <img class="gallery-main" src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=85" alt="主图" loading="lazy">
+      <img class="gallery-sub" src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80&fit=crop&h=400" alt="副图1" loading="lazy" style="object-position:center 30%">
+      <img class="gallery-sub" src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80&fit=crop&h=400&crop=entropy" alt="副图2" loading="lazy" style="object-position:center 70%">
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="badge badge-accent">房东推荐</span>
+              <span class="badge badge-secondary">超赞房东</span>
+            </div>
+            <h1 style="font-size:clamp(1.35rem,2.5vw,1.75rem)">西湖畔·湖景精品酒店</h1>
+            <p style="font-size:0.9375rem;display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-1)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              杭州 · 西湖区 · 距离西湖 200m
+            </p>
+          </div>
+          <button class="btn btn-ghost btn-icon" aria-label="收藏">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <div style="display:flex;gap:var(--space-8);flex-wrap:wrap;margin-bottom:var(--space-6)">
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:600;color:var(--fg)">4.9</div>
+            <div style="font-size:0.8125rem;color:var(--fg-secondary)">评分</div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:600;color:var(--fg)">128</div>
+            <div style="font-size:0.8125rem;color:var(--fg-secondary)">评价</div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:600;color:var(--fg)">3</div>
+            <div style="font-size:0.8125rem;color:var(--fg-secondary)">卧室</div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:600;color:var(--fg)">6</div>
+            <div style="font-size:0.8125rem;color:var(--fg-secondary)">床位</div>
+          </div>
+          <div class="text-center">
+            <div style="font-size:1.25rem;font-weight:600;color:var(--fg)">2</div>
+            <div style="font-size:0.8125rem;color:var(--fg-secondary)">卫生间</div>
+          </div>
+        </div>
+
+        <h3 class="mb-4">房源描述</h3>
+        <p style="line-height:1.7;margin-bottom:var(--space-4)">
+          位于西湖核心景区，步行 3 分钟可达断桥残雪。酒店融合现代设计与江南园林元素，每个房间都可欣赏湖景或园景。配备高端床品、智能家居系统，提供免费早餐和茶歇。
+        </p>
+        <p style="color:var(--fg-secondary)">· 2025 年重新装修 · 全屋地暖 · 智能门锁 · 免费停车</p>
+
+        <hr class="divider">
+
+        <h3 class="mb-4">设施服务</h3>
+        <div class="amenities">
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            免费 WiFi
+          </div>
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6v6"/><path d="M16 6v6"/><rect x="2" y="12" width="20" height="8" rx="2"/><path d="M6 12V6a6 6 0 0 1 12 0v6"/></svg>
+            空调
+          </div>
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            独立卫浴
+          </div>
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            洗衣机
+          </div>
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            厨房
+          </div>
+          <div class="amenity-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            智能电视
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="host-card">
+          <div class="avatar avatar-lg" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white)">张</div>
+          <div>
+            <div style="font-weight:600;font-size:1.0625rem">张先生</div>
+            <div style="font-size:0.875rem;color:var(--fg-secondary)">超赞房东 · 2019 年加入</div>
+            <div style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">回复率 98% · 回复快</div>
+          </div>
+          <button class="btn btn-outline btn-sm ml-auto" onclick="alert('联系房东')">联系房东</button>
+        </div>
+
+        <hr class="divider">
+
+        <div class="flex items-center justify-between mb-4">
+          <h3>评价 · 4.9 · 128 条</h3>
+          <a href="/screens/reviews/list.html" class="btn btn-ghost btn-sm">查看全部</a>
+        </div>
+
+        <div class="review-item">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="avatar avatar-sm">李</div>
+            <div>
+              <div style="font-weight:500;font-size:0.9375rem">李明</div>
+              <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年3月 · 家庭出游</div>
+            </div>
+          </div>
+          <div class="stars mb-2">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p style="font-size:0.9375rem;color:var(--fg)">非常棒的体验！房间干净整洁，窗外就是西湖美景。房东很热情，给我们推荐了很多周边美食。下次还会再来！</p>
+        </div>
+
+        <div class="review-item">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="avatar avatar-sm">王</div>
+            <div>
+              <div style="font-weight:500;font-size:0.9375rem">王晓</div>
+              <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年2月 · 情侣出游</div>
+            </div>
+          </div>
+          <div class="stars mb-2">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p style="font-size:0.9375rem;color:var(--fg)">位置绝佳，步行到西湖只需几分钟。房间设计很有品味，早餐也很丰富。唯一不足是隔音稍微有点差，其他都很完美。</p>
+        </div>
+      </div>
+
+      <div class="detail-sidebar">
+        <div class="booking-card fade-in">
+          <div class="price">¥588 <small>/晚</small></div>
+          <div class="stars mt-2 mb-4">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span style="font-size:0.875rem;color:var(--fg-secondary);margin-left:var(--space-2)">4.9 · 128条评价</span>
+          </div>
+
+          <div class="date-grid mb-4">
+            <div>
+              <label class="form-label">入住</label>
+              <input type="date" class="input" value="2026-06-01">
+            </div>
+            <div>
+              <label class="form-label">退房</label>
+              <input type="date" class="input" value="2026-06-03">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">住客</label>
+            <select class="input">
+              <option>1位住客</option>
+              <option>2位住客</option>
+              <option selected>3位住客</option>
+              <option>4位住客</option>
+              <option>5位住客</option>
+              <option>6位住客</option>
+            </select>
+          </div>
+
+          <div style="padding:var(--space-4) 0;border-bottom:1px solid var(--border-light)">
+            <div class="flex justify-between mb-2">
+              <span style="font-size:0.9375rem">¥588 × 2 晚</span>
+              <span style="font-size:0.9375rem">¥1,176</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span style="font-size:0.9375rem">清洁费</span>
+              <span style="font-size:0.9375rem">¥80</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span style="font-size:0.9375rem">服务费</span>
+              <span style="font-size:0.9375rem">¥88</span>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-4 mb-6">
+            <span style="font-weight:600;font-size:1.125rem">总价</span>
+            <span style="font-weight:600;font-size:1.125rem;font-family:var(--font-display)">¥1,344</span>
+          </div>
+
+          <a href="/screens/bookings/confirm.html" class="btn btn-primary w-full btn-lg">
+            预订
+          </a>
+          <p class="text-center text-small mt-3">预订前不会扣款</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col"><div class="footer-brand">开心住 LiveHappy</div><p class="footer-desc">让每一段旅程都有开心的住处。</p></div>
+      <div class="footer-col"><h4>探索</h4><a href="search.html">搜索房源</a><a href="/screens/social/feed.html">旅记广场</a></div>
+      <div class="footer-col"><h4>帮助</h4><a href="#">常见问题</a><a href="#">联系我们</a></div>
+      <div class="footer-col"><h4>合作</h4><a href="#">房东入驻</a><a href="#">商务合作</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 开心住 LiveHappy</span></div>
+  </div>
+</footer>
+
+<script>
+(function() {
+</script>
+</body>
+</html>

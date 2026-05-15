@@ -24,6 +24,9 @@ Thumbs.db
 .env
 *.env.local
 
+# Open Design source files
+网站原型设计模板/
+
 # Node
 node_modules/
 

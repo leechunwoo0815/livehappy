@@ -1,6 +1,6 @@
-# StayHub — 短租民宿预订平台
+# LiveHappy — 开心住酒店民宿预订平台
 
-Python + FastAPI 重构版，单体应用，全 Docker 部署。
+Python + FastAPI 重构版，前端使用 Open Design 精美原型 + htmx。
 
 ## 技术栈
 
@@ -10,70 +10,80 @@ Python + FastAPI 重构版，单体应用，全 Docker 部署。
 | 数据库 | PostgreSQL 16 + SQLAlchemy 2.0 |
 | 缓存 | Redis 7 |
 | 消息队列 | Kafka 7.6 + ZooKeeper |
-| 搜索引擎 | Elasticsearch 8.13 (按需启用) |
-| 任务队列 | ARQ (Redis 驱动) |
-| 前端 | 静态 HTML + htmx (等待模板中) |
+| 前端 | 纯 HTML + htmx + Alpine.js |
+| 设计系统 | 自定义 system.css (26KB, 亮/暗双主题) |
 | 部署 | Docker Compose / 阿里云 ECS |
 
 ## 快速启动
 
 ```bash
-# 1. 启动中间件 + 后端
-docker compose -f docker/docker-compose.yml up -d
+# 一键启动全部
+docker compose -f docker/docker-compose.yml up -d --build
 
-# 2. 访问
-#    后端 API: http://localhost:8000
-#    前端:     http://localhost:3000
-
-# 3. 本地开发（中间件用 Docker，后端用 uvicorn 热重载）
-docker compose -f docker/docker-compose.yml up -d postgres redis kafka
-cd backend && uv run uvicorn app.main:app --reload --port 8000
+# 访问
+#   前端页面:  http://localhost:3000
+#   API 接口:  http://localhost:8000/api/
 ```
 
 ## 项目结构
 
 ```
-backend/
+backend/                  # FastAPI 后端
 ├── app/
-│   ├── main.py           # FastAPI 入口 + 路由注册
-│   ├── config.py         # 配置管理 (pydantic-settings)
-│   ├── database.py       # async SQLAlchemy 引擎
-│   ├── redis.py          # Redis 连接
-│   ├── kafka.py          # Kafka 生产者
-│   ├── elasticsearch.py  # ES 客户端 (按需启用)
-│   ├── models/           # SQLAlchemy ORM 模型
-│   ├── schemas/          # Pydantic 请求/响应
-│   ├── routers/          # API 路由 (9 模块)
+│   ├── main.py           # 入口 (8 路由模块, /api 前缀)
+│   ├── models/           # 9 个 ORM 模型
+│   ├── routers/          # 8 个路由模块
 │   ├── services/         # 业务逻辑
-│   └── middleware/       # JWT 认证中间件
-├── tests/                # pytest 测试
-├── alembic/              # 数据库迁移
-└── alembic.ini
+│   └── ...
+├── tests/                # 15 测试
+└── ...
+
+frontend/                 # 前端静态文件
+├── index.html            # 首页（完整版模板）
+├── css/system.css        # 设计系统
+├── js/
+│   ├── htmx.min.js       # API 数据绑定
+│   ├── alpine.min.js     # 前端交互
+│   └── app.js            # 主题切换
+├── screens/              # 20+ 页面
+│   ├── auth/             # 登录 / 注册
+│   ├── listings/         # 搜索 / 详情 / 创建
+│   ├── bookings/         # 列表 / 详情 / 确认
+│   ├── messages/         # 会话 / 聊天
+│   ├── social/           # 动态 / 笔记
+│   ├── reviews/          # 评价
+│   ├── users/            # 个人中心
+│   ├── admin/            # 管理后台
+│   └── ai/               # AI 助手
+├── nginx.conf            # /api 反代到后端
+└── Dockerfile            # nginx:alpine
+
+docker/docker-compose.yml # 18 容器编排
 ```
 
 ## API 概览
 
-| 路径 | 模块 | 说明 |
+所有接口以 `/api` 开头，前端 nginx 反代。
+
+| 方法 | 路径 | 说明 |
 |---|---|---|
-| `/auth` | 认证 | 注册/登录/Token 刷新 |
-| `/users` | 用户 | 用户资料 |
-| `/listings` | 房源 | CRUD + 图片 + 审核 + 搜索 |
-| `/bookings` | 预订 | 创建/支付/取消, 状态机 |
-| `/messages` | 消息 | 会话列表/发送/已读 |
-| `/social` | 社交 | 笔记/评论/点赞去重/关注 |
-| `/reviews` | 评价 | 评分 1-5, 带回复 |
-| `/ai` | AI | 聊天 Mock / DeepSeek 代理 |
-| `/admin` | 管理 | (预留) |
+| POST | `/api/auth/register` | 注册 |
+| POST | `/api/auth/login` | 登录 |
+| POST | `/api/auth/refresh` | 刷新 Token |
+| GET | `/api/listings/search` | 搜索房源 |
+| GET/POST/PUT/DELETE | `/api/listings/{id}` | 房源 CRUD |
+| POST | `/api/bookings/` | 创建预订 |
+| POST | `/api/bookings/{id}/pay` | 支付 |
+| POST | `/api/bookings/{id}/cancel` | 取消 |
+| POST | `/api/messages/send` | 发送消息 |
+| POST | `/api/ai/chat` | AI 聊天 |
+| POST | `/api/social/notes` | 社交笔记 |
+| POST | `/api/reviews/` | 评价 |
 
 ## 开发
 
 ```bash
-make precommit   # 格式化 → 静态检查 → 测试 (提交前闭环)
-make test        # 运行测试 (15 tests)
-make dc-up       # Docker Compose 启动
+make test        # 15 测试
+make dc-up       # Docker 启动
+make precommit   # ruff → pytest 闭环
 ```
-
-## 部署
-
-- **本地**: `docker compose -f docker/docker-compose.yml up -d --build`
-- **阿里云 ECS**: 见 `docs/03-deployment/02-ecs-deploy.md`

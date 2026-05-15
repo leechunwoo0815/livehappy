@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "开心住 LiveHappy",
+  "entry": "livehappy-hotel-booking.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-05-15T08:14:26.066Z",
+  "updatedAt": "2026-05-15T08:14:26.083Z",
+  "sourceSkillId": "agent-browser",
+  "designSystemId": "default",
+  "metadata": {
+    "identifier": "livehappy-hotel-booking",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

@@ -37,14 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/auth", tags=["认证"])
-app.include_router(users.router, prefix="/users", tags=["用户"])
-app.include_router(listings.router, prefix="/listings", tags=["房源"])
-app.include_router(bookings.router, prefix="/bookings", tags=["预订"])
-app.include_router(messages.router, prefix="/messages", tags=["消息"])
-app.include_router(social.router, prefix="/social", tags=["社交"])
-app.include_router(reviews.router, prefix="/reviews", tags=["评价"])
-app.include_router(ai.router, prefix="/ai", tags=["AI"])
+app.include_router(auth.router, prefix="/api/auth", tags=["认证"])
+app.include_router(users.router, prefix="/api/users", tags=["用户"])
+app.include_router(listings.router, prefix="/api/listings", tags=["房源"])
+app.include_router(bookings.router, prefix="/api/bookings", tags=["预订"])
+app.include_router(messages.router, prefix="/api/messages", tags=["消息"])
+app.include_router(social.router, prefix="/api/social", tags=["社交"])
+app.include_router(reviews.router, prefix="/api/reviews", tags=["评价"])
+app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 
 
 @app.get("/")
