@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: stayhub-postgres
+    container_name: livehappy-postgres
     environment:
       POSTGRES_DB: stayhub
       POSTGRES_USER: stayhub
@@ -18,7 +18,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: stayhub-redis
+    container_name: livehappy-redis
     ports:
       - "6379:6379"
     volumes:
@@ -31,14 +31,14 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
-    container_name: stayhub-zookeeper
+    container_name: livehappy-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: stayhub-kafka
+    container_name: livehappy-kafka
     depends_on:
       - zookeeper
     ports:
@@ -52,9 +52,9 @@ services:
 
   backend:
     build:
-      context: ../backend
-      dockerfile: ../docker/Dockerfile.backend
-    container_name: stayhub-backend
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: livehappy-backend
     ports:
       - "8000:8000"
     depends_on:
@@ -74,7 +74,7 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    container_name: stayhub-frontend
+    container_name: livehappy-frontend
     ports:
       - "3000:80"
     depends_on:
