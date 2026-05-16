@@ -1,0 +1,13 @@
+.git
+.gitignore
+.github
+__pycache__
+*.pyc
+.venv
+venv
+.env
+*.egg-info
+frontend
+docs
+docker
+.DS_Store
