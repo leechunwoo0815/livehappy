@@ -25,16 +25,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[dev]"
-        working-directory: backend
 
       - name: Ruff check
-        run: ruff check .
-        working-directory: backend
+        run: ruff check backend/
 
       - name: Ruff format check
-        run: ruff format --check .
-        working-directory: backend
+        run: ruff format --check backend/
 
       - name: Test
-        run: pytest -q
-        working-directory: backend
+        run: PYTHONPATH=backend pytest backend/ -q

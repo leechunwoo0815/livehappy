@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>预订确认 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="../../css/system.css">
+<style>
+.confirm-grid{display:grid;grid-template-columns:1fr 380px;gap:var(--space-8);align-items:start}
+@media(max-width:1023px){.confirm-grid{grid-template-columns:1fr}}
+.order-summary{border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-6);background:var(--surface);position:sticky;top:calc(var(--nav-height) + var(--space-6))}
+@media(max-width:1023px){.order-summary{position:static}}
+.payment-method{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);border:2px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;transition:all var(--transition-fast)}
+.payment-method:hover{border-color:var(--accent)}
+.payment-method.selected{border-color:var(--accent);background:var(--accent-subtle)}
+.payment-method input{accent-color:var(--accent);width:18px;height:18px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-brand">
+      <span class="nav-brand-icon">K</span>
+      开心住
+    </a>
+    <div class="nav-links">
+      <a href="../listings/search.html" class="nav-link">搜索房源</a>
+      <a href="list.html" class="nav-link">我的订单</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:960px">
+    <div class="mb-8">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="badge badge-accent" style="font-size:0.75rem;padding:1px 8px">步骤 1/3</span>
+        <span style="font-size:0.875rem;color:var(--fg-tertiary)">确认信息</span>
+        <span style="color:var(--fg-tertiary)">→</span>
+        <span style="font-size:0.875rem;color:var(--fg-tertiary)">支付</span>
+        <span style="color:var(--fg-tertiary)">→</span>
+        <span style="font-size:0.875rem;color:var(--fg-tertiary)">完成</span>
+      </div>
+      <h1>确认并支付</h1>
+    </div>
+
+    <div class="confirm-grid">
+      <div>
+        <div class="card mb-6">
+          <h3 class="mb-4">预订详情</h3>
+          <div class="flex gap-4" style="margin-bottom:var(--space-5)">
+            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80" alt="房源" style="width:120px;height:90px;object-fit:cover;border-radius:var(--radius-md);flex-shrink:0">
+            <div>
+              <div style="font-size:1.0625rem;font-weight:600">西湖畔·湖景精品酒店</div>
+              <div style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">杭州 · 西湖区</div>
+              <div class="stars mt-2">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span style="font-size:0.8125rem;color:var(--fg-secondary);margin-left:4px">4.9 · 超赞房东</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">入住</label>
+              <div style="font-weight:500">2026年6月1日 (周一)</div>
+              <div style="font-size:0.875rem;color:var(--fg-secondary)">15:00 后入住</div>
+            </div>
+            <div>
+              <label class="form-label">退房</label>
+              <div style="font-weight:500">2026年6月3日 (周三)</div>
+              <div style="font-size:0.875rem;color:var(--fg-secondary)">12:00 前退房</div>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div style="font-weight:500">住客</div>
+              <div style="font-size:0.875rem;color:var(--fg-secondary)">3位住客</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">修改</button>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <h3 class="mb-4">选择支付方式</h3>
+
+          <div class="flex flex-col gap-3">
+            <label class="payment-method selected" onclick="selectPayment(this)">
+              <input type="radio" name="payment" checked>
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;color:#06b6d4"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+              <div>
+                <div style="font-weight:500">支付宝</div>
+                <div style="font-size:0.8125rem;color:var(--fg-secondary)">支持花呗、余额宝、银行卡</div>
+              </div>
+            </label>
+
+            <label class="payment-method" onclick="selectPayment(this)">
+              <input type="radio" name="payment">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;color:#07c160"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 12h8"/></svg>
+              <div>
+                <div style="font-weight:500">微信支付</div>
+                <div style="font-size:0.8125rem;color:var(--fg-secondary)">微信零钱、信用卡、借记卡</div>
+              </div>
+            </label>
+
+            <label class="payment-method" onclick="selectPayment(this)">
+              <input type="radio" name="payment">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--accent)"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <div>
+                <div style="font-weight:500">银行卡</div>
+                <div style="font-size:0.8125rem;color:var(--fg-secondary)">Visa / Mastercard / 银联</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <h3 class="mb-4">特殊要求（选填）</h3>
+          <textarea class="input" placeholder="例如：需要婴儿床、高楼层、无烟房…" rows="3"></textarea>
+        </div>
+
+        <div class="card">
+          <h3 class="mb-4">取消政策</h3>
+          <div style="font-size:0.9375rem;line-height:1.7;color:var(--fg-secondary)">
+            <p>· 入住前 48 小时免费取消</p>
+            <p>· 入住前 24 小时取消收取 50%</p>
+            <p>· 入住当天取消收取 100%</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="order-summary">
+          <h3 class="mb-4">订单摘要</h3>
+
+          <div style="padding-bottom:var(--space-4);border-bottom:1px solid var(--border-light)">
+            <div class="flex justify-between mb-3">
+              <span style="font-size:0.9375rem">¥588 × 2 晚</span>
+              <span style="font-size:0.9375rem">¥1,176</span>
+            </div>
+            <div class="flex justify-between mb-3">
+              <span style="font-size:0.9375rem">清洁费</span>
+              <span style="font-size:0.9375rem">¥80</span>
+            </div>
+            <div class="flex justify-between mb-3">
+              <span style="font-size:0.9375rem">服务费</span>
+              <span style="font-size:0.9375rem">¥88</span>
+            </div>
+          </div>
+
+          <div class="flex justify-between mt-4 mb-6">
+            <span style="font-weight:600;font-size:1.125rem">总价</span>
+            <span style="font-weight:600;font-size:1.25rem;font-family:var(--font-display);color:var(--accent)">¥1,344</span>
+          </div>
+
+          <button class="btn btn-primary w-full btn-lg" onclick="handlePay()" id="payBtn">
+            <span id="payText">确认支付 ¥1,344</span>
+            <span id="paySpinner" class="spinner" style="display:none"></span>
+          </button>
+
+          <div id="paySuccess" class="alert alert-success mt-4" style="display:none">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div>
+              <div style="font-weight:500">预订成功！</div>
+              <div style="font-size:0.875rem">订单号：KX20260601001</div>
+            </div>
+          </div>
+
+          <p class="text-center text-small mt-3">点击确认即表示同意 <a href="#" style="color:var(--accent)">服务条款</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch(e) {}
+}
+function selectPayment(el) {
+  document.querySelectorAll('.payment-method').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+}
+function handlePay() {
+  const btn = document.getElementById('payBtn');
+  const text = document.getElementById('payText');
+  const spinner = document.getElementById('paySpinner');
+  const success = document.getElementById('paySuccess');
+
+  btn.disabled = true;
+  text.style.display = 'none';
+  spinner.style.display = 'block';
+
+  setTimeout(() => {
+    btn.style.display = 'none';
+    success.style.display = 'flex';
+  }, 2000);
+}
+(function() {
+  try { const s = localStorage.getItem('theme'); if (s) document.documentElement.setAttribute('data-theme', s); } catch(e) {}
+})();
+</script>
+</body>
+</html>

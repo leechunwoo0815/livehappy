@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>搜索房源 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="../../css/system.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-brand">
+      <span class="nav-brand-icon">K</span>
+      开心住
+    </a>
+    <div class="nav-links">
+      <a href="search.html" class="nav-link active">搜索房源</a>
+      <a href="../bookings/list.html" class="nav-link">我的订单</a>
+      <a href="../messages/list.html" class="nav-link">消息</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a href="../auth/login.html" class="btn btn-outline btn-sm">登录</a>
+      <a href="../auth/register.html" class="btn btn-primary btn-sm">注册</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero-search">
+  <div class="container">
+    <h1>搜索你的下一段旅程</h1>
+    <p>探索全球 10,000+ 精品酒店与特色民宿</p>
+    <div class="search-bar">
+      <div class="search-bar-field" style="flex:2">
+        <label>目的地</label>
+        <input type="text" placeholder="城市、区域或房源名称" value="杭州" id="searchDest">
+      </div>
+      <div class="search-bar-field">
+        <label>入住</label>
+        <input type="date" value="2026-06-01" id="checkin">
+      </div>
+      <div class="search-bar-field">
+        <label>退房</label>
+        <input type="date" value="2026-06-03" id="checkout">
+      </div>
+      <div class="search-bar-field" style="max-width:100px">
+        <label>住客</label>
+        <select id="guests"><option>1人</option><option>2人</option><option selected>3人</option><option>4人</option><option>5+人</option></select>
+      </div>
+      <button class="btn-search" onclick="handleSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="margin-top:var(--space-6)">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 style="font-size:1.25rem">杭州 · 86 间房源</h2>
+      <p class="text-small" style="margin-top:var(--space-1)">6月1日 — 6月3日 · 3位住客</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-ghost btn-sm" onclick="toggleFilters()">筛选</button>
+      <button class="btn btn-outline btn-sm">排序</button>
+    </div>
+  </div>
+
+  <div id="filterPanel" class="card card-sm mb-6" style="display:none">
+    <div class="flex flex-wrap gap-4">
+      <div style="min-width:160px">
+        <label class="form-label">价格范围</label>
+        <div class="flex gap-2 items-center">
+          <input type="number" class="input" placeholder="¥0" style="width:80px">
+          <span style="color:var(--fg-tertiary)">—</span>
+          <input type="number" class="input" placeholder="¥2000" style="width:80px">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">房型</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="pill-tab active" onclick="togglePill(this)">全部</button>
+          <button class="pill-tab" onclick="togglePill(this)">整套</button>
+          <button class="pill-tab" onclick="togglePill(this)">单间</button>
+          <button class="pill-tab" onclick="togglePill(this)">合住</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">评分</label>
+        <div class="flex gap-2 flex-wrap">
+          <button class="pill-tab" onclick="togglePill(this)">4.5+</button>
+          <button class="pill-tab active" onclick="togglePill(this)">4.0+</button>
+          <button class="pill-tab" onclick="togglePill(this)">3.5+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3" style="gap:var(--space-5)">
+    <div class="listing-card fade-in stagger-1">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80" alt="西湖畔精品酒店" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.9</span>
+          <span style="color:var(--fg-tertiary)">· 128条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">西湖畔·湖景精品酒店</a>
+        <div class="listing-card-meta mt-1">杭州 · 西湖区</div>
+        <div class="listing-card-price mt-2">¥588 <small>/晚</small></div>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in stagger-2">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&q=80" alt="灵隐禅意民宿" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.8</span>
+          <span style="color:var(--fg-tertiary)">· 96条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">灵隐·禅意山居民宿</a>
+        <div class="listing-card-meta mt-1">杭州 · 西湖区</div>
+        <div class="listing-card-price mt-2">¥420 <small>/晚</small></div>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in stagger-3">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=80" alt="钱塘江奢华公寓" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.7</span>
+          <span style="color:var(--fg-tertiary)">· 203条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">钱塘江畔·天际奢华公寓</a>
+        <div class="listing-card-meta mt-1">杭州 · 上城区</div>
+        <div class="listing-card-price mt-2">¥899 <small>/晚</small></div>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in stagger-1">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&q=80" alt="龙井茶园民宿" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.9</span>
+          <span style="color:var(--fg-tertiary)">· 67条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">龙井茶园·山景独栋</a>
+        <div class="listing-card-meta mt-1">杭州 · 西湖区</div>
+        <div class="listing-card-price mt-2">¥680 <small>/晚</small></div>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in stagger-2">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1590490359683-658d3d6f972e?w=600&q=80" alt="河坊街历史建筑" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.6</span>
+          <span style="color:var(--fg-tertiary)">· 154条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">河坊街·百年历史民宿</a>
+        <div class="listing-card-meta mt-1">杭州 · 上城区</div>
+        <div class="listing-card-price mt-2">¥520 <small>/晚</small></div>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in stagger-3">
+      <div class="listing-card-image">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80" alt="西溪湿地度假村" loading="lazy">
+        <button class="listing-card-wishlist" aria-label="收藏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+        </button>
+      </div>
+      <div class="listing-card-body">
+        <div class="listing-card-rating mb-1">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>4.8</span>
+          <span style="color:var(--fg-tertiary)">· 89条评价</span>
+        </div>
+        <a href="detail.html" class="listing-card-title" style="color:var(--fg)">西溪湿地·生态度假酒店</a>
+        <div class="listing-card-meta mt-1">杭州 · 西湖区</div>
+        <div class="listing-card-price mt-2">¥760 <small>/晚</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-center mt-10">
+    <button class="btn btn-outline">加载更多</button>
+  </div>
+</section>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch(e) {}
+}
+function toggleFilters() {
+  const p = document.getElementById('filterPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function togglePill(el) {
+  el.classList.toggle('active');
+}
+function handleSearch() {
+  const dest = document.getElementById('searchDest').value;
+  alert(`搜索 "${dest}" 的房源...`);
+}
+(function() {
+  try { const s = localStorage.getItem('theme'); if (s) document.documentElement.setAttribute('data-theme', s); } catch(e) {}
+})();
+</script>
+</body>
+</html>

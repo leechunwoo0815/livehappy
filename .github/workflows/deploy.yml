@@ -23,15 +23,15 @@ jobs:
       - name: Build & Push backend
         run: |
           docker build -f docker/Dockerfile.backend \
-            -t ${{ secrets.ACR_REGISTRY }}/stayhub-backend:${{ github.sha }} \
-            -t ${{ secrets.ACR_REGISTRY }}/stayhub-backend:latest \
+            -t ${{ secrets.ACR_REGISTRY }}/livehappy-backend:${{ github.sha }} \
+            -t ${{ secrets.ACR_REGISTRY }}/livehappy-backend:latest \
             backend
-          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/stayhub-backend
+          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/livehappy-backend
 
       - name: Build & Push frontend
         run: |
           docker build -f frontend/Dockerfile \
-            -t ${{ secrets.ACR_REGISTRY }}/stayhub-frontend:${{ github.sha }} \
-            -t ${{ secrets.ACR_REGISTRY }}/stayhub-frontend:latest \
+            -t ${{ secrets.ACR_REGISTRY }}/livehappy-frontend:${{ github.sha }} \
+            -t ${{ secrets.ACR_REGISTRY }}/livehappy-frontend:latest \
             frontend
-          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/stayhub-frontend
+          docker push --all-tags ${{ secrets.ACR_REGISTRY }}/livehappy-frontend

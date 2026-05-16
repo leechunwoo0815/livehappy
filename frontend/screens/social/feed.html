@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>旅记广场 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="/css/system.css">
+<script src="/js/htmx.min.js"></script>
+<script src="/js/alpine.min.js" defer></script>
+<script src="/js/app.js"></script>
+<style>
+.note-card{border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;background:var(--surface);transition:all var(--transition-base)}
+.note-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.note-card-image{aspect-ratio:16/10;overflow:hidden;background:var(--surface-hover)}
+.note-card-image img{width:100%;height:100%;object-fit:cover;transition:transform var(--transition-slow)}
+.note-card:hover .note-card-image img{transform:scale(1.03)}
+.note-card-body{padding:var(--space-5)}
+.note-card-author{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3)}
+.note-card-title{font-size:1.0625rem;font-weight:600;margin-bottom:var(--space-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note-card-text{font-size:0.9375rem;color:var(--fg-secondary);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.6}
+.note-card-actions{display:flex;gap:var(--space-4);margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border-light);font-size:0.875rem;color:var(--fg-tertiary)}
+.note-card-actions button{display:flex;align-items:center;gap:var(--space-1);color:var(--fg-tertiary);transition:color var(--transition-fast)}
+.note-card-actions button:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
+      <a href="feed.html" class="nav-link active">旅记</a>
+      <a href="/screens/messages/list.html" class="nav-link">消息</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a href="/screens/auth/login.html" class="btn btn-outline btn-sm">登录</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1>旅记广场</h1>
+        <p style="font-size:0.9375rem;color:var(--fg-secondary)">分享你的旅行故事，发现更多精彩</p>
+      </div>
+      <button class="btn btn-primary" onclick="window.location.href='note.html'">写旅记</button>
+    </div>
+
+    <div class="pill-tabs mb-6">
+      <button class="pill-tab active" onclick="togglePill(this)">推荐</button>
+      <button class="pill-tab" onclick="togglePill(this)">最新</button>
+      <button class="pill-tab" onclick="togglePill(this)">关注</button>
+      <button class="pill-tab" onclick="togglePill(this)">杭州</button>
+      <button class="pill-tab" onclick="togglePill(this)">成都</button>
+      <button class="pill-tab" onclick="togglePill(this)">大理</button>
+      <button class="pill-tab" onclick="togglePill(this)">三亚</button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-5">
+      <div class="note-card fade-in stagger-1">
+        <a href="note.html" style="text-decoration:none;color:inherit">
+          <div class="note-card-image">
+            <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80" alt="" loading="lazy">
+          </div>
+          <div class="note-card-body">
+            <div class="note-card-author">
+              <div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">林</div>
+              <div><div style="font-size:0.875rem;font-weight:500">小林旅居</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">2天前</div></div>
+            </div>
+            <div class="note-card-title">杭州三日漫游——住到了一间推开窗就是西湖的民宿</div>
+            <div class="note-card-text">这次来杭州出差顺便度了个短假，订到了西湖边的一间民宿，推开窗户就能看到湖景。早上在湖边晨跑，傍晚去断桥看日落...</div>
+            <div class="note-card-actions">
+              <button onclick="event.preventDefault()">♡ 248</button>
+              <button onclick="event.preventDefault()">💬 36</button>
+              <button onclick="event.preventDefault()">↺ 分享</button>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="note-card fade-in stagger-2">
+        <a href="note.html" style="text-decoration:none;color:inherit">
+          <div class="note-card-image">
+            <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80" alt="" loading="lazy">
+          </div>
+          <div class="note-card-body">
+            <div class="note-card-author">
+              <div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary)">陈</div>
+              <div><div style="font-size:0.875rem;font-weight:500">背包客小陈</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">5天前</div></div>
+            </div>
+            <div class="note-card-title">大理深度游｜在洱海边住了7天的真实体验</div>
+            <div class="note-card-text">很多朋友问我大理到底值不值得长住。我的答案是：如果你找对了住处，完全值得。这次通过开心住订到的洱海边民宿...</div>
+            <div class="note-card-actions">
+              <button onclick="event.preventDefault()">♡ 512</button>
+              <button onclick="event.preventDefault()">💬 89</button>
+              <button onclick="event.preventDefault()">↺ 分享</button>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="note-card fade-in stagger-3">
+        <a href="note.html" style="text-decoration:none;color:inherit">
+          <div class="note-card-image">
+            <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&q=80" alt="" loading="lazy">
+          </div>
+          <div class="note-card-body">
+            <div class="note-card-author">
+              <div class="avatar avatar-sm" style="background:var(--success-subtle);color:var(--success)">王</div>
+              <div><div style="font-size:0.875rem;font-weight:500">美食旅行家小王</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">1周前</div></div>
+            </div>
+            <div class="note-card-title">成都｜为了这顿火锅，我飞了2000公里</div>
+            <div class="note-card-text">作为一个火锅重度爱好者，成都一直是我的美食圣地。这次住在春熙路附近的一间公寓，下楼就是各种美食...</div>
+            <div class="note-card-actions">
+              <button onclick="event.preventDefault()">♡ 386</button>
+              <button onclick="event.preventDefault()">💬 52</button>
+              <button onclick="event.preventDefault()">↺ 分享</button>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="flex justify-center mt-10">
+      <button class="btn btn-outline">加载更多</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePill(el) {
+  document.querySelectorAll('.pill-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+(function() {
+</script>
+</body>
+</html>

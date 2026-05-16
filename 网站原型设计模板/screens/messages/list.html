@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>消息 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="../../css/system.css">
+<style>
+.conversation-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);border-radius:var(--radius-lg);cursor:pointer;transition:all var(--transition-fast)}
+.conversation-item:hover{background:var(--surface-hover)}
+.conversation-item.active{background:var(--accent-subtle)}
+.conversation-item .content{flex:1;min-width:0}
+.conversation-item .name{font-weight:500;font-size:0.9375rem;display:flex;align-items:center;gap:var(--space-2)}
+.conversation-item .preview{font-size:0.875rem;color:var(--fg-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conversation-item .time{font-size:0.75rem;color:var(--fg-tertiary);flex-shrink:0}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="../listings/search.html" class="nav-link">搜索房源</a>
+      <a href="../bookings/list.html" class="nav-link">我的订单</a>
+      <a href="list.html" class="nav-link active">消息</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a href="../auth/login.html" class="btn btn-outline btn-sm">登录</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:720px">
+    <h1 class="mb-6">消息</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this)">全部消息</button>
+      <button class="tab" onclick="switchTab(this)">未读 (3)</button>
+      <button class="tab" onclick="switchTab(this)">房东</button>
+      <button class="tab" onclick="switchTab(this)">系统</button>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <a href="chat.html" class="conversation-item" style="text-decoration:none;color:inherit">
+        <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white);font-size:0.8125rem">张</div>
+        <div class="content">
+          <div class="name">
+            张先生（西湖畔酒店）
+            <span class="unread-dot"></span>
+          </div>
+          <div class="preview">好的，没问题，我会为您准备好婴儿床和加床。到店前有任何需要随时联系我！</div>
+        </div>
+        <div class="time">刚刚</div>
+      </a>
+
+      <a href="chat.html" class="conversation-item" style="text-decoration:none;color:inherit">
+        <div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent);font-size:0.8125rem">王</div>
+        <div class="content">
+          <div class="name">
+            王女士（灵隐民宿）
+            <span class="unread-dot"></span>
+          </div>
+          <div class="preview">您好，6月15日-17日的房间还有空余，欢迎预订～</div>
+        </div>
+        <div class="time">2小时前</div>
+      </a>
+
+      <a href="chat.html" class="conversation-item" style="text-decoration:none;color:inherit">
+        <div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary);font-size:0.8125rem">K</div>
+        <div class="content">
+          <div class="name">
+            开心住客服
+            <span class="unread-dot"></span>
+          </div>
+          <div class="preview">您的订单 KX20260601001 已确认，祝您旅途愉快！</div>
+        </div>
+        <div class="time">昨天</div>
+      </a>
+
+      <a href="chat.html" class="conversation-item" style="text-decoration:none;color:inherit;opacity:0.7">
+        <div class="avatar avatar-sm" style="background:var(--surface-hover);color:var(--fg-secondary);font-size:0.8125rem">陈</div>
+        <div class="content">
+          <div class="name">陈先生（龙井茶园）</div>
+          <div class="preview">谢谢您的预订，期待您的到来！</div>
+        </div>
+        <div class="time">3天前</div>
+      </a>
+
+      <a href="chat.html" class="conversation-item" style="text-decoration:none;color:inherit;opacity:0.7">
+        <div class="avatar avatar-sm" style="background:var(--surface-hover);color:var(--fg-secondary);font-size:0.8125rem">李</div>
+        <div class="content">
+          <div class="name">李女士（钱塘江公寓）</div>
+          <div class="preview">好的，您之前的评价已回复，感谢您的入住！</div>
+        </div>
+        <div class="time">1周前</div>
+      </a>
+    </div>
+
+    <div class="card card-sm mt-6" style="text-align:center;border-style:dashed">
+      <p style="font-size:0.875rem;color:var(--fg-tertiary)">需要帮助？联系开心住客服  · 响应时间 &lt; 5 分钟</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch(e) {}
+}
+function switchTab(el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+(function() {
+  try { const s = localStorage.getItem('theme'); if (s) document.documentElement.setAttribute('data-theme', s); } catch(e) {}
+})();
+</script>
+</body>
+</html>

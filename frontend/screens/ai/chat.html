@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 助手 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="/css/system.css">
+<script src="/js/htmx.min.js"></script>
+<script src="/js/alpine.min.js" defer></script>
+<script src="/js/app.js"></script>
+<style>
+.ai-container{display:flex;flex-direction:column;height:calc(100vh - var(--nav-height) - 80px);max-height:700px;border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;background:var(--surface)}
+.ai-header{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--border);background:var(--surface)}
+.ai-messages{flex:1;overflow-y:auto;padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-4);scroll-behavior:smooth}
+.ai-msg{display:flex;gap:var(--space-3);max-width:85%}
+.ai-msg.assistant{align-self:flex-start}
+.ai-msg.user{align-self:flex-end;flex-direction:row-reverse}
+.ai-msg-avatar{width:32px;height:32px;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.875rem}
+.ai-msg.assistant .ai-msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white)}
+.ai-msg.user .ai-msg-avatar{background:var(--surface-hover);color:var(--fg-secondary)}
+.ai-msg-content{padding:12px 16px;border-radius:var(--radius-xl);font-size:0.9375rem;line-height:1.6}
+.ai-msg.assistant .ai-msg-content{background:var(--surface-hover);color:var(--fg);border-bottom-left-radius:var(--radius-sm)}
+.ai-msg.user .ai-msg-content{background:var(--accent);color:var(--white);border-bottom-right-radius:var(--radius-sm)}
+.ai-suggestions{display:flex;gap:var(--space-2);flex-wrap:wrap;padding:var(--space-3) var(--space-5)}
+.ai-suggestion{padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-full);font-size:0.8125rem;color:var(--fg-secondary);cursor:pointer;transition:all var(--transition-fast);background:var(--surface)}
+.ai-suggestion:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-subtle)}
+.ai-thinking{display:flex;align-items:center;gap:var(--space-2);padding:12px 16px;color:var(--fg-tertiary);font-size:0.875rem}
+.ai-thinking .dots{display:flex;gap:4px}
+.ai-thinking .dot{width:6px;height:6px;border-radius:50%;background:var(--fg-tertiary);animation:aiBounce 1.4s infinite}
+.ai-thinking .dot:nth-child(2){animation-delay:0.2s}
+.ai-thinking .dot:nth-child(3){animation-delay:0.4s}
+@keyframes aiBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
+      <a href="/screens/bookings/list.html" class="nav-link">我的订单</a>
+      <a href="chat.html" class="nav-link active">AI 助手</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-sm">
+  <div class="container" style="max-width:720px">
+    <div class="flex items-center gap-2 mb-4">
+      <h1>AI 旅行助手</h1>
+      <span class="badge badge-accent">Powered by DeepSeek</span>
+    </div>
+
+    <div class="ai-container">
+      <div class="ai-header">
+        <div class="ai-msg-avatar" style="width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white);font-size:1rem;display:flex;align-items:center;justify-content:center;border-radius:50%">AI</div>
+        <div>
+          <div style="font-weight:600;font-size:0.9375rem">开心住 AI 助手</div>
+          <div style="font-size:0.8125rem;color:var(--success)">在线 · DeepSeek 驱动</div>
+        </div>
+        <button class="btn btn-ghost btn-icon ml-auto" onclick="clearChat()" title="清空对话">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      </div>
+
+      <div class="ai-messages" id="aiMessages">
+        <div class="ai-msg assistant fade-in">
+          <div class="ai-msg-avatar">AI</div>
+          <div class="ai-msg-content">
+            你好！我是开心住的 AI 旅行助手。我可以帮你：
+            <br>🏠 推荐目的地的特色房源
+            <br>📅 规划行程和预算
+            <br>🎯 根据你的偏好匹配合适的住宿
+            <br><br>有什么我可以帮你的吗？
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-suggestions" id="aiSuggestions">
+        <button class="ai-suggestion" onclick="quickAsk('杭州西湖边有什么推荐的住宿？')">🏛 杭州西湖住宿推荐</button>
+        <button class="ai-suggestion" onclick="quickAsk('预算500以内，适合家庭出游的民宿')">💰 预算500以内家庭游</button>
+        <button class="ai-suggestion" onclick="quickAsk('大理和丽江哪个更适合冬天去？')">🗺 大理 vs 丽江冬季</button>
+        <button class="ai-suggestion" onclick="quickAsk('如何成为开心住的房东？')">🏡 如何成为房东</button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5);border-top:1px solid var(--border)">
+        <input type="text" name="content" class="chat-input" placeholder="输入你的旅行问题..." id="aiInput"
+          hx-post="/api/ai/chat" hx-target="#chatMessages" hx-swap="beforeend" hx-trigger="keydown[key=='Enter']" hx-include="[name='content']">
+        <button class="chat-send" onclick="document.getElementById('aiInput').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function sendAiMessage(text) {
+  const input = document.getElementById('aiInput');
+  const msg = text || input.value.trim();
+  if (!msg) return;
+
+  const container = document.getElementById('aiMessages');
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'ai-msg user fade-in';
+  userMsg.innerHTML = `<div class="ai-msg-avatar">我</div><div class="ai-msg-content">${msg}</div>`;
+  container.appendChild(userMsg);
+
+  input.value = '';
+  container.scrollTop = container.scrollHeight;
+
+  const thinking = document.createElement('div');
+  thinking.className = 'ai-msg assistant';
+  thinking.innerHTML = `<div class="ai-msg-avatar">AI</div><div class="ai-thinking"><span>思考中</span><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  container.appendChild(thinking);
+  container.scrollTop = container.scrollHeight;
+
+  setTimeout(() => {
+    thinking.remove();
+
+    const reply = document.createElement('div');
+    reply.className = 'ai-msg assistant fade-in';
+    const responses = {
+      '杭州西湖边有什么推荐的住宿？': '根据你的需求，我推荐以下西湖边的高评分住宿：\n\n1️⃣ **西湖畔·湖景精品酒店** ⭐4.9\n   · 距离西湖仅200米，推窗见湖\n   · 588元/晚，性价比很高\n   · 房东回复率98%\n\n2️⃣ **龙井茶园·山景独栋** ⭐4.9\n   · 位于龙井村，环境清幽\n   · 680元/晚，含早\n   · 适合家庭或情侣\n\n3️⃣ **灵隐·禅意山居民宿** ⭐4.8\n   · 灵隐寺旁边，安静禅意\n   · 420元/晚，最实惠的选择\n\n需要我帮你查看更多细节或直接预订吗？😊',
+      '预算500以内，适合家庭出游的民宿': '预算500以内、适合家庭的推荐：\n\n1️⃣ **灵隐·禅意山居民宿** ⭐4.8\n   · ¥420/晚，2室1厅\n   · 灵隐寺旁，环境安静\n   · 免费停车，适合自驾\n\n2️⃣ **河坊街·百年历史民宿** ⭐4.6\n   · ¥520/晚（略超预算但值）\n   · 河坊街步行街旁\n   · 3室，适合大家庭\n\n需要我进一步筛选吗？比如指定城市或特定日期？'
+    };
+
+    const replyText = responses[msg] || '感谢你的提问！让我查一下相关信息...\n\n根据开心住平台的数据，我为你找到以下推荐：\n\n🌟 **杭州·西湖区** 共有86间适合的房源\n   · 评分4.5以上的有32间\n   · 价格区间 ¥188 - ¥1,200/晚\n   · 其中12间支持即时预订\n\n需要更具体的推荐吗？请告诉我你的出行日期、预算和人数，我为你精准匹配！';
+
+    reply.innerHTML = `<div class="ai-msg-avatar">AI</div><div class="ai-msg-content">${replyText.replace(/\n/g, '<br>')}</div>`;
+    container.appendChild(reply);
+    container.scrollTop = container.scrollHeight;
+  }, 1500);
+}
+
+function quickAsk(text) {
+  sendAiMessage(text);
+}
+
+function clearChat() {
+  const container = document.getElementById('aiMessages');
+  container.innerHTML = `
+    <div class="ai-msg assistant fade-in">
+      <div class="ai-msg-avatar">AI</div>
+      <div class="ai-msg-content">
+        你好！我是开心住的 AI 旅行助手。我可以帮你：
+        <br>🏠 推荐目的地的特色房源
+        <br>📅 规划行程和预算
+        <br>🎯 根据你的偏好匹配合适的住宿
+        <br><br>有什么我可以帮你的吗？
+      </div>
+    </div>`;
+}
+
+(function() {
+</script>
+</body>
+</html>

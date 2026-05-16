@@ -7,9 +7,9 @@ where = ["backend"]
 include = ["app*"]
 
 [project]
-name = "stayhub"
+name = "livehappy"
 version = "0.1.0"
-description = "StayHub - 短租民宿预订平台"
+description = "LiveHappy - 开心住酒店民宿预订平台"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
@@ -29,6 +29,7 @@ dependencies = [
     "python-multipart>=0.0.12",
     "jinja2>=3.1.0",
     "python-dotenv>=1.0.0",
+    "email-validator>=2.2.0",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +39,7 @@ dev = [
     "httpx>=0.28.0",
     "ruff>=0.8.0",
     "mypy>=1.13.0",
+    "aiosqlite>=0.20.0",
 ]
 
 [tool.ruff]
@@ -46,6 +48,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG", "PTH", "PL"]
+ignore = ["B008", "B904", "PLR2004", "PLR0913", "PLW0603", "ARG001", "PLC0415"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>聊天 — 张先生 · 开心住 LiveHappy</title>
+<link rel="stylesheet" href="../../css/system.css">
+<style>
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - var(--nav-height) - 80px);max-height:700px;border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;background:var(--surface)}
+.chat-header{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--border);background:var(--surface)}
+.chat-messages{flex:1;overflow-y:auto;padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-4);scroll-behavior:smooth}
+.chat-input-area{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5);border-top:1px solid var(--border);background:var(--surface)}
+.chat-input{flex:1;padding:12px 18px;border:1.5px solid var(--border);border-radius:var(--radius-full);background:var(--surface-hover);color:var(--fg);font-size:0.9375rem;outline:none;transition:border-color var(--transition-fast)}
+.chat-input:focus{border-color:var(--accent);background:var(--surface)}
+.chat-send{width:42px;height:42px;border-radius:var(--radius-full);background:var(--accent);color:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--transition-fast)}
+.chat-send:hover{background:var(--accent-hover);transform:scale(1.05)}
+.chat-send svg{width:20px;height:20px}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../../index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="../listings/search.html" class="nav-link">搜索房源</a>
+      <a href="../bookings/list.html" class="nav-link">我的订单</a>
+      <a href="list.html" class="nav-link active">消息</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-sm">
+  <div class="container" style="max-width:720px">
+    <a href="list.html" class="btn btn-ghost btn-sm mb-3" style="color:var(--fg-secondary)">← 返回消息列表</a>
+
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white)">张</div>
+        <div>
+          <div style="font-weight:600;font-size:0.9375rem">张先生</div>
+          <div style="font-size:0.8125rem;color:var(--success)">在线 · 通常 1 分钟内回复</div>
+        </div>
+        <div class="ml-auto flex gap-2">
+          <button class="btn btn-ghost btn-icon" onclick="alert('查看房源')" title="查看房源">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-icon" onclick="alert('更多')" title="更多">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble received">
+          您好！欢迎预订西湖畔·湖景精品酒店。有什么我可以帮您的吗？
+          <span class="chat-time">5月15日 14:35</span>
+        </div>
+
+        <div class="chat-bubble sent">
+          你好！我们 3 位成人入住，想问一下是否可以加一张婴儿床？孩子还比较小。
+          <span class="chat-time">5月15日 14:38</span>
+        </div>
+
+        <div class="chat-bubble received">
+          当然可以！我们提供免费婴儿床和儿童浴盆。另外，如果您需要，我们也可以安排加床，费用是每晚 ¥100。
+          <span class="chat-time">5月15日 14:40</span>
+        </div>
+
+        <div class="chat-bubble sent">
+          太好了，那我们预订的时候就备注加婴儿床。另外请问附近有什么适合带孩子玩的地方吗？
+          <span class="chat-time">5月15日 14:42</span>
+        </div>
+
+        <div class="chat-bubble received">
+          好的，没问题，我会为您准备好婴儿床和加床。到店前有任何需要随时联系我！
+          <span class="chat-time">5月15日 14:45</span>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <button class="btn btn-ghost btn-icon" title="附件">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+        </button>
+        <input type="text" class="chat-input" placeholder="输入消息..." id="chatInput" onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="chat-send" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch(e) {}
+}
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const msgs = document.getElementById('chatMessages');
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble sent';
+  const now = new Date();
+  const time = now.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  bubble.innerHTML = `${text}<span class="chat-time">${time}</span>`;
+  msgs.appendChild(bubble);
+  input.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  setTimeout(() => {
+    const reply = document.createElement('div');
+    reply.className = 'chat-bubble received';
+    const replies = ['好的，收到您的消息！', '没问题，我会尽快处理。', '感谢您的反馈！', '了解，还有其他需要吗？'];
+    reply.innerHTML = `${replies[Math.floor(Math.random()*replies.length)]}<span class="chat-time">${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</span>`;
+    msgs.appendChild(reply);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 800);
+}
+(function() {
+  try { const s = localStorage.getItem('theme'); if (s) document.documentElement.setAttribute('data-theme', s); } catch(e) {}
+  const msgs = document.getElementById('chatMessages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+})();
+</script>
+</body>
+</html>

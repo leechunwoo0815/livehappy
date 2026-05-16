@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>旅记详情 — 开心住 LiveHappy</title>
+<link rel="stylesheet" href="/css/system.css">
+<script src="/js/htmx.min.js"></script>
+<script src="/js/alpine.min.js" defer></script>
+<script src="/js/app.js"></script>
+<style>
+.note-cover{width:100%;max-height:400px;object-fit:cover;border-radius:var(--radius-xl);margin-bottom:var(--space-6)}
+.comment-item{padding:var(--space-4) 0;border-bottom:1px solid var(--border-light)}
+.comment-item:last-child{border-bottom:none}
+.comment-input-area{display:flex;gap:var(--space-3);align-items:flex-start}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a><a href="feed.html" class="nav-link active">旅记</a></div>
+    <div class="nav-actions"><button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    </button></div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:720px">
+    <a href="feed.html" class="btn btn-ghost btn-sm mb-4" style="color:var(--fg-secondary)">← 返回旅记广场</a>
+
+    <div class="flex items-center gap-3 mb-4">
+      <div class="avatar avatar-md" style="background:var(--accent-subtle);color:var(--accent)">林</div>
+      <div>
+        <div style="font-weight:600">小林旅居</div>
+        <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年5月13日 · 杭州</div>
+      </div>
+      <button class="btn btn-outline btn-sm ml-auto">关注</button>
+    </div>
+
+    <img class="note-cover" src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=85" alt="" loading="lazy">
+
+    <h1 style="font-size:clamp(1.35rem,2.5vw,1.75rem);margin-bottom:var(--space-4)">杭州三日漫游——住到了一间推开窗就是西湖的民宿</h1>
+
+    <div style="font-size:0.9375rem;line-height:1.8;color:var(--fg)">
+      <p class="mb-4">这次来杭州出差顺便度了个短假，订到了西湖边的一间民宿，推开窗户就能看到湖景。早上在湖边晨跑，傍晚去断桥看日落，生活节奏一下子慢了下来。</p>
+      <p class="mb-4">民宿是在开心住上找到的，评分4.9，房东张先生非常热情。房间是简约的日式风格，有大落地窗，早上阳光洒进来特别美。还提供了免费的龙井茶和点心。</p>
+      <p class="mb-4">第一天去了灵隐寺，人不多，很清静。中午在附近吃了一家素面馆，味道出乎意料的好。下午去了龙井村，漫山遍野的茶园，空气里都是茶香。</p>
+      <p class="mb-4">第二天安排的是西湖一日游。从断桥出发，沿着白堤走到孤山，再坐船到三潭印月。晚上在湖滨路吃了西湖醋鱼和东坡肉，非常满足。</p>
+      <p class="mb-4">第三天去了西溪湿地，坐摇橹船穿行在水道中，两岸是茂密的芦苇和树林。中午在湿地里的茶馆喝了杯龙井，悠闲地结束了这次旅程。</p>
+      <p class="mb-4">总的来说，这是一次非常治愈的旅行。好的住宿真的能让整个旅行的幸福感提升不少。已经在期待下一次了！</p>
+    </div>
+
+    <div class="flex items-center gap-4 mt-6 mb-8">
+      <button class="btn btn-ghost" onclick="toggleLike(this)">
+        <span id="likeIcon">♡</span> <span id="likeCount">248</span>
+      </button>
+      <button class="btn btn-ghost">💬 36</button>
+      <button class="btn btn-ghost">↺ 分享</button>
+    </div>
+
+    <div class="card mb-6">
+      <h4 class="mb-4">相关房源</h4>
+      <div class="flex gap-4">
+        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80" alt="" style="width:100px;height:70px;object-fit:cover;border-radius:var(--radius-md)">
+        <div>
+          <div style="font-weight:500">西湖畔·湖景精品酒店</div>
+          <div style="font-size:0.875rem;color:var(--fg-secondary)">杭州 · 西湖区</div>
+          <div style="font-size:0.875rem;font-weight:600;color:var(--accent);margin-top:var(--space-1)">¥588/晚</div>
+        </div>
+        <button class="btn btn-outline btn-sm ml-auto" onclick="window.location.href='../listings/detail.html'">查看</button>
+      </div>
+    </div>
+
+    <h3 class="mb-4">评论 · 36</h3>
+
+    <div class="comment-input-area mb-6">
+      <div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">李</div>
+      <div style="flex:1">
+        <input type="text" class="input" placeholder="写下你的评论..." id="commentInput" onkeydown="if(event.key==='Enter')addComment()" style="border-radius:var(--radius-full)">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addComment()">发送</button>
+    </div>
+
+    <div id="commentsSection">
+      <div class="comment-item">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary)">张</div>
+          <div><div style="font-size:0.875rem;font-weight:500">张三</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">2小时前</div></div>
+        </div>
+        <p style="font-size:0.9375rem">照片拍得真好！我也在计划去杭州，能问一下民宿的名字吗？</p>
+        <div class="flex items-center gap-3 mt-2">
+          <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0" onclick="toggleLike(this)">♡ 12</button>
+          <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">回复</button>
+        </div>
+      </div>
+
+      <div class="comment-item">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="avatar avatar-sm" style="background:var(--success-subtle);color:var(--success)">王</div>
+          <div><div style="font-size:0.875rem;font-weight:500">王小美</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">5小时前</div></div>
+        </div>
+        <p style="font-size:0.9375rem">西湖醋鱼推荐楼外楼，价格虽然贵一点但是味道最正宗！</p>
+        <div class="flex items-center gap-3 mt-2">
+          <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0" onclick="toggleLike(this)">♡ 8</button>
+          <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">回复</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleLike(el) {
+  const count = el.querySelector('span:last-child, span');
+  if (count) {
+    const n = parseInt(count.textContent);
+    count.textContent = el.textContent.includes('♡') ? n + 1 : n - 1;
+  }
+}
+function addComment() {
+  const input = document.getElementById('commentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const section = document.getElementById('commentsSection');
+  const item = document.createElement('div');
+  item.className = 'comment-item';
+  item.innerHTML = `
+    <div class="flex items-center gap-2 mb-1">
+      <div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">我</div>
+      <div><div style="font-size:0.875rem;font-weight:500">我</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">刚刚</div></div>
+    </div>
+    <p style="font-size:0.9375rem">${text}</p>
+    <div class="flex items-center gap-3 mt-2">
+      <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0" onclick="toggleLike(this)">♡ 0</button>
+      <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">回复</button>
+    </div>`;
+  section.insertBefore(item, section.firstChild);
+  input.value = '';
+}
+(function() {
+</script>
+</body>
+</html>

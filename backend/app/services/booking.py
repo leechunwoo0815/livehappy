@@ -79,21 +79,21 @@ async def cancel_booking(
     booking = await db.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if booking.guest_id != user_id and booking.host_id != user_id:
+    if user_id not in (booking.guest_id, booking.host_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     if booking.status in ("cancelled", "completed"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="订单已结束")
 
+    was_confirmed = booking.status == "confirmed"
     booking.status = "cancelled"
     booking.cancelled_at = datetime.now(UTC)
     booking.cancel_reason = reason
 
-    if booking.status == "confirmed":
+    if was_confirmed:
         payment = await _get_payment(db, booking_id)
         if payment:
             payment.status = "refunded"
             payment.refunded_at = booking.cancelled_at
-            amount = payment.amount
             payment.amount = Decimal("0")
             payment.host_payout = Decimal("0")
             payment.platform_fee = Decimal("0")

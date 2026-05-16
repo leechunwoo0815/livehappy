@@ -1,4 +1,8 @@
-# StayHub 架构总览
+# LiveHappy 架构总览
+
+> 品牌名: **LiveHappy** (开心住)
+> GitHub: `leechunwoo0815/livehappy`
+> CI: [![Python CI](https://github.com/leechunwoo0815/livehappy/actions/workflows/python-ci.yml/badge.svg)](https://github.com/leechunwoo0815/livehappy/actions/workflows/python-ci.yml)
 
 ## 技术栈
 
@@ -43,14 +47,11 @@ stayhub/
 
 | 路由前缀 | 模块 | 说明 |
 |---|---|---|
-| /auth | 认证 | 注册/登录/Token 刷新 |
-| /users | 用户 | 用户资料 |
-| /listings | 房源 | 房源 CRUD/审核/图片 |
-| /search | 搜索 | 关键词/地理搜索 |
-| /bookings | 预订 | 预订状态机 |
-| /payments | 支付 | 支付/分账/退款 |
-| /reviews | 评价 | 评价/回复 |
-| /messages | 消息 | 会话/消息/WebSocket |
-| /social | 社交 | 笔记/评论/点赞/关注 |
-| /admin | 管理 | 运营管理 |
-| /ai | AI | 聊天/DeepSeek 代理 |
+| /api/auth | 认证 | 注册/登录/Token 刷新 |
+| /api/users | 用户 | 用户资料 |
+| /api/listings | 房源 | 房源 CRUD/审核/图片/搜索 |
+| /api/bookings | 预订 | 预订创建/支付/取消状态机 |
+| /api/messages | 消息 | 会话列表/发送/已读 |
+| /api/social | 社交 | 笔记/评论/点赞去重/关注 |
+| /api/reviews | 评价 | 评价/回复 (1-5分) |
+| /api/ai | AI | 聊天 Mock / DeepSeek 代理 |
