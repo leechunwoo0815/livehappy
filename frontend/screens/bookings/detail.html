@@ -9,117 +9,64 @@
 <script src="/js/alpine.min.js" defer></script>
 <script src="/js/app.js"></script>
 <style>
-.status-timeline{position:relative;padding-left:var(--space-6)}
-.status-timeline::before{content:'';position:absolute;left:11px;top:4px;bottom:4px;width:2px;background:var(--border)}
-.status-step{position:relative;padding-bottom:var(--space-6)}
-.status-step:last-child{padding-bottom:0}
-.status-dot{position:absolute;left:calc(-1 * var(--space-6) + 4px);top:4px;width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:var(--surface)}
-.status-step.active .status-dot{border-color:var(--accent);background:var(--accent)}
-.status-step.completed .status-dot{border-color:var(--success);background:var(--success)}
-.status-step.completed .status-dot::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--white);font-size:10px;font-weight:700}
+.page{padding:var(--space-8) 0}
+.detail-card{max-width:600px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-8)}
+.detail-row{display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border);font-size:0.875rem}
+.detail-row:last-child{border-bottom:0}
+.badge{padding:2px 10px;border-radius:var(--radius-full);font-size:0.75rem;font-weight:500}
+.badge-pending{background:var(--warning-subtle);color:var(--warning)}
+.badge-paid{background:var(--info-subtle);color:var(--info)}
+.badge-confirmed{background:var(--success-subtle);color:var(--success)}
+.badge-cancelled{background:var(--danger-subtle);color:var(--danger)}
 </style>
 </head>
 <body>
+<div class="container page" x-data="detailApp()" x-init="init()">
+  <div x-show="!loaded" class="text-center py-8">加载中...</div>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
-    <div class="nav-links">
-      <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
-      <a href="list.html" class="nav-link active">我的订单</a>
-    </div>
-    <div class="nav-actions">
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-      </button>
-    </div>
-  </div>
-</nav>
+  <template x-if="loaded && booking">
+    <div class="detail-card">
+      <h2>订单详情</h2>
+      <div class="detail-row"><span>订单编号</span><span x-text="booking.id" style="font-size:0.8125rem"></span></div>
+      <div class="detail-row"><span>房源</span><span x-text="booking.listing_title || ('#' + booking.listing_id)"></span></div>
+      <div class="detail-row"><span>入住</span><span x-text="booking.check_in"></span></div>
+      <div class="detail-row"><span>离店</span><span x-text="booking.check_out"></span></div>
+      <div class="detail-row"><span>住客</span><span x-text="booking.guests">人</span></div>
+      <div class="detail-row"><span>状态</span><span class="badge" :class="'badge-' + booking.status" x-text="statusLabel(booking.status)"></span></div>
+      <div class="detail-row"><span>总金额</span><span style="font-weight:700;color:var(--accent)">¥<span x-text="booking.total_price"></span></span></div>
+      <div x-show="booking.cancel_reason" class="detail-row"><span>取消原因</span><span x-text="booking.cancel_reason" style="color:var(--danger)"></span></div>
 
-<div class="page">
-  <div class="container" style="max-width:800px">
-    <div class="flex items-start justify-between mb-6">
-      <div>
-        <a href="list.html" class="btn btn-ghost btn-sm mb-2" style="color:var(--fg-secondary)">← 返回订单列表</a>
-        <h1>订单详情</h1>
-        <p style="font-size:0.875rem;color:var(--fg-tertiary)">订单号：KX20260601001</p>
-      </div>
-      <span class="badge badge-success" style="font-size:0.875rem;padding:4px 16px">已确认</span>
-    </div>
-
-    <div class="card mb-6">
-      <div class="flex gap-4" style="margin-bottom:var(--space-4)">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80" alt="" style="width:140px;height:100px;object-fit:cover;border-radius:var(--radius-md);flex-shrink:0">
-        <div>
-          <h3 style="font-size:1.125rem">西湖畔·湖景精品酒店</h3>
-          <p style="font-size:0.875rem;color:var(--fg-secondary)">杭州 · 西湖区 · 距离西湖 200m</p>
-          <div class="stars mt-2">
-            <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span style="font-size:0.875rem;color:var(--fg-secondary);margin-left:4px">4.9 · 128 条评价</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div><span class="form-label">入住</span><div style="font-weight:500">2026年6月1日 (周一)</div><div style="font-size:0.875rem;color:var(--fg-secondary)">15:00 后</div></div>
-        <div><span class="form-label">退房</span><div style="font-weight:500">2026年6月3日 (周三)</div><div style="font-size:0.875rem;color:var(--fg-secondary)">12:00 前</div></div>
-        <div><span class="form-label">住客</span><div style="font-weight:500">3 位住客</div></div>
-        <div><span class="form-label">下单时间</span><div style="font-weight:500">2026年5月15日 14:32</div></div>
+      <div style="margin-top:var(--space-6);display:flex;gap:var(--space-3)">
+        <a :href="'/screens/listings/detail.html?id=' + booking.listing_id" class="btn btn-outline">查看房源</a>
+        <button x-show="booking.status === 'pending'" class="btn btn-danger" @click="cancelBooking()" :disabled="cancelling" x-text="cancelling ? '取消中...' : '取消订单'"></button>
       </div>
     </div>
-
-    <div class="card mb-6">
-      <h3 class="mb-4">订单状态</h3>
-      <div class="status-timeline">
-        <div class="status-step completed">
-          <div class="status-dot"></div>
-          <div style="font-weight:500">订单已创建</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">2026年5月15日 14:32</div>
-        </div>
-        <div class="status-step completed">
-          <div class="status-dot"></div>
-          <div style="font-weight:500">支付成功</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">2026年5月15日 14:33 · 支付宝</div>
-        </div>
-        <div class="status-step active">
-          <div class="status-dot"></div>
-          <div style="font-weight:500">等待入住</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">距离入住还有 17 天</div>
-        </div>
-        <div class="status-step">
-          <div class="status-dot"></div>
-          <div style="font-weight:500">入住中</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">2026年6月1日 15:00</div>
-        </div>
-        <div class="status-step">
-          <div class="status-dot"></div>
-          <div style="font-weight:500">已完成</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">2026年6月3日 12:00</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card mb-6">
-      <h3 class="mb-4">价格明细</h3>
-      <div class="flex justify-between mb-3"><span>¥588 × 2 晚</span><span>¥1,176</span></div>
-      <div class="flex justify-between mb-3"><span>清洁费</span><span>¥80</span></div>
-      <div class="flex justify-between mb-3"><span>服务费</span><span>¥88</span></div>
-      <hr class="divider">
-      <div class="flex justify-between"><span style="font-weight:600">总价</span><span style="font-weight:600;font-size:1.25rem;font-family:var(--font-display);color:var(--accent)">¥1,344</span></div>
-      <div class="flex justify-between mt-2"><span style="font-size:0.875rem;color:var(--fg-secondary)">已支付</span><span class="badge badge-success">已付款</span></div>
-    </div>
-
-    <div class="flex gap-3">
-      <button class="btn btn-outline flex-1" onclick="alert('联系房东')">联系房东</button>
-      <button class="btn btn-outline flex-1" onclick="alert('修改订单')">修改订单</button>
-      <button class="btn btn-danger flex-1" onclick="alert('取消订单？')">取消订单</button>
-    </div>
-  </div>
+  </template>
 </div>
 
 <script>
-(function() {
+function detailApp() {
+  return {
+    booking: null,
+    loaded: false,
+    cancelling: false,
+    statusLabel(s) { return {pending:'待付款',paid:'已支付',confirmed:'已确认',cancelled:'已取消'}[s] || s },
+    async init() {
+      const id = new URLSearchParams(location.search).get('id');
+      if (!id) return;
+      const res = await api('/api/bookings/' + id);
+      if (res.ok) { this.booking = await res.json(); this.loaded = true }
+    },
+    async cancelBooking() {
+      if (!confirm('确定要取消这个订单吗？')) return;
+      this.cancelling = true;
+      const res = await api('/api/bookings/' + this.booking.id + '/cancel', { method: 'POST', body: '{}' });
+      if (res.ok) { this.booking = await res.json() }
+      else { alert('取消失败') }
+      this.cancelling = false;
+    }
+  }
+}
 </script>
 </body>
 </html>

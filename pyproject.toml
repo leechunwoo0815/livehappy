@@ -18,7 +18,6 @@ dependencies = [
     "asyncpg>=0.30.0",
     "alembic>=1.14.0",
     "redis>=5.2.0",
-    "aiokafka>=0.12.0",
     "elasticsearch[async]>=8.17.0",
     "arq>=0.26.0",
     "httpx>=0.28.0",

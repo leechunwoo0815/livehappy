@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine
 from app.elasticsearch import close_elasticsearch, init_elasticsearch
-from app.kafka import close_kafka, init_kafka
 from app.models import Base
 from app.redis import close_redis, init_redis
 from app.routers import ai, auth, bookings, listings, messages, reviews, social, users
@@ -18,11 +17,9 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     await init_redis()
-    await init_kafka()
     await init_elasticsearch()
     yield
     await close_elasticsearch()
-    await close_kafka()
     await close_redis()
     await engine.dispose()
 

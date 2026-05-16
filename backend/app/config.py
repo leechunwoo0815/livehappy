@@ -8,7 +8,6 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://stayhub:stayhub123@localhost:5432/stayhub"
     redis_url: str = "redis://localhost:6379/0"
-    kafka_bootstrap_servers: str = "localhost:9092"
 
     elasticsearch_hosts: list[str] = ["http://localhost:9200"]
     elasticsearch_enabled: bool = False
