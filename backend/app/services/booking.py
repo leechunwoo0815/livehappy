@@ -13,6 +13,7 @@ from app.core.exceptions import (
 from app.models.booking import Booking, Payment
 from app.models.listing import Listing
 from app.schemas.booking import BookingCreate
+from app.services.notification import create_notification
 
 PLATFORM_FEE_RATE = Decimal("0.10")
 
@@ -86,6 +87,15 @@ async def pay_booking(db: AsyncSession, booking_id: str, user_id: str) -> Paymen
     db.add(payment)
     await db.commit()
     await db.refresh(payment)
+
+    await create_notification(
+        db,
+        booking.host_id,
+        "booking_confirmed",
+        f"您有一笔新订单已支付，金额 ¥{amount}",
+        booking_id,
+    )
+
     return payment
 
 
@@ -115,6 +125,15 @@ async def cancel_booking(
             payment.platform_fee = Decimal("0")
 
     await db.commit()
+
+    notify_user = booking.host_id if user_id == booking.guest_id else booking.guest_id
+    await create_notification(
+        db,
+        notify_user,
+        "booking_cancelled",
+        f"订单已取消" + (f"，原因：{reason}" if reason else ""),
+        booking_id,
+    )
 
 
 async def get_booking(db: AsyncSession, booking_id: str, user_id: str) -> Booking:

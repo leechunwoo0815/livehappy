@@ -10,6 +10,7 @@ from app.core.exceptions import (
 from app.models.booking import Booking
 from app.models.listing import Listing
 from app.models.review import Review
+from app.services.notification import create_notification
 
 
 async def create_review(
@@ -40,6 +41,17 @@ async def create_review(
     db.add(review)
     await db.commit()
     await db.refresh(review)
+
+    listing = await db.get(Listing, listing_id)
+    if listing:
+        await create_notification(
+            db,
+            listing.host_id,
+            "review_received",
+            f"您收到一条 {rating} 星评价",
+            review.id,
+        )
+
     return {"id": review.id, "rating": review.rating, "content": review.content}
 
 
@@ -72,4 +84,13 @@ async def reply_to_review(db: AsyncSession, review_id: str, host_id: str, reply:
     review.reply = reply
     await db.commit()
     await db.refresh(review)
+
+    await create_notification(
+        db,
+        review.user_id,
+        "review_replied",
+        "房东回复了您的评价",
+        review.id,
+    )
+
     return {"id": review.id, "reply": review.reply}
