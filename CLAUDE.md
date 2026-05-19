@@ -587,7 +587,7 @@ avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
 ### 测试金字塔
 
 ```
-        /  E2E  \           <- 5%   核心用户流程（暂未实现）
+        /  E2E  \           <- 5%   核心用户流程（Guest/Host/Admin 全流程模拟）
        / 集成测试 \          <- 25%  API 端点 + 数据库
       /  单元测试   \        <- 70%  Service 层业务逻辑
 ```
@@ -909,7 +909,7 @@ chore: update dependencies
 | 前端 vanilla JS | ✅ | api-client.js + app.js，无第三方依赖 |
 | 管理后台 | ✅ | 12 个 admin 端点 + 审计日志 |
 | 种子数据 | ✅ | seed.py + POST /api/admin/seed |
-| 测试覆盖 | ✅ | 91 个测试 + 角色 fixtures + E2E 模拟 |
+| 测试覆盖 | ✅ | 106 个测试 + 角色 fixtures + E2E 全流程模拟 |
 | 路由无直接 SQL | ✅ | 所有查询下沉到 service 层 |
 
 ### 严重问题（必须修复）
@@ -919,7 +919,7 @@ chore: update dependencies
 | 1 | ~~routers/auth.py 仍用 HTTPException~~ | ~~错误响应格式不统一~~ | ✅ 已修复 |
 | 2 | ~~routers/users.py 路由里直接写 select(User)~~ | ~~违反"路由不写 SQL"架构规则~~ | ✅ 已修复 |
 | 3 | ~~routers/listings.py 审核端点无管理员权限检查~~ | ~~任何登录用户都能审核房源~~ | ✅ 已修复 |
-| 4 | ~~测试仅 69 个（目标 80%+ 覆盖率）~~ | ~~覆盖率不足~~ | ✅ 已修复（79个测试） |
+| 4 | ~~测试仅 69 个（目标 80%+ 覆盖率）~~ | ~~覆盖率不足~~ | ✅ 已修复（106个测试） |
 | 5 | ~~Notification 模型已定义但无 router/service~~ | ~~死代码~~ | ✅ 已修复 |
 | 6 | ~~评价条件写错：confirmed 应为 completed~~ | ~~未退房就能评价~~ | ✅ 已修复 |
 
@@ -952,7 +952,7 @@ Phase 8    ✅ 基础设施框架 — exceptions/common/handlers/api-client
 Phase 9    ✅ 认证体系 — JWTMiddleware 重写/Token黑名单/logout/密码重置
 Phase 10   ✅ 统一响应 — 11个router返回BaseResponse/10个service用自定义异常/路由无直接SQL
 Phase 11   ✅ 模型扩展 — is_banned字段/Notification router+service/Alembic迁移
-Phase 12   ✅ 测试体系 — 角色fixtures/新增notification+upload+health测试/79个测试
+Phase 12   ✅ 测试体系 — 角色fixtures/新增notification+upload+health测试/106个测试
 Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
 ```
