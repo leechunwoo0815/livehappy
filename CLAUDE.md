@@ -235,7 +235,6 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 | 数据库 | PostgreSQL | 14+ | 本地 brew 安装，asyncpg 驱动 |
 | 迁移工具 | Alembic | >= 1.14 | schema 变更必须生成迁移文件 |
 | 缓存 | Redis（可选） | 7 | 内存降级替代，不影响启动 |
-| 搜索引擎 | Elasticsearch | 8.13 | 按需启用 (elasticsearch_enabled=false) |
 | 前端 | vanilla JS + api-client.js | — | 纯 HTML 静态文件，python3 -m http.server |
 | 设计系统 | system.css | — | CSS 变量，亮/暗双主题 |
 | 监控 | Sentry | — | 错误追踪（需 SENTRY_DSN） |
@@ -258,7 +257,6 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   ├── config.py            # pydantic-settings 配置类 + model_validator
 │   │   ├── database.py          # async SQLAlchemy 引擎 + get_db 依赖注入
 │   │   ├── redis.py             # Redis 客户端 + _InMemoryRedis 降级实现
-│   │   ├── elasticsearch.py     # ES 客户端 (按需启用)
 │   │   ├── core/                # 核心基础设施
 │   │   │   ├── exceptions.py    # 自定义异常体系 (AppException 基类)
 │   │   │   └── handlers.py      # 全局异常处理器 → 统一 BaseResponse
@@ -307,8 +305,6 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   ├── middleware/          # 中间件
 │   │   │   ├── auth.py          # JWTMiddleware (全局) + get_current_user (依赖项)
 │   │   │   └── ratelimit.py     # 请求限流中间件 (Redis 降级时跳过)
-│   │   └── tasks/               # ARQ 异步任务
-│   │       └── __init__.py      # (待扩展)
 │   ├── scripts/
 │   │   └── seed.py              # 测试数据生成脚本
 │   ├── tests/                   # 测试
@@ -907,7 +903,7 @@ chore: update dependencies
 | 前端 vanilla JS | ✅ | api-client.js + app.js，无第三方依赖 |
 | 管理后台 | ✅ | 12 个 admin 端点 + 审计日志 |
 | 种子数据 | ✅ | seed.py + POST /api/admin/seed |
-| 测试覆盖 | ✅ | 79 个测试 + 角色 fixtures |
+| 测试覆盖 | ✅ | 91 个测试 + 角色 fixtures + E2E 模拟 |
 | 路由无直接 SQL | ✅ | 所有查询下沉到 service 层 |
 
 ### 严重问题（必须修复）
@@ -925,8 +921,8 @@ chore: update dependencies
 
 | # | 问题 | 状态 |
 |---|---|---|
-| 7 | `.env` 的 `CORS_ORIGINS` 含 `http://localhost:8000`，后端已是 8001 | ⬜ 待处理 |
-| 8 | `pyproject.toml` 依赖 `aiokafka`/`arq`/`elasticsearch`/`jinja2`/`aiofiles`，实际未使用 | ⬜ 待处理 |
+| 7 | ~~`.env` 的 `CORS_ORIGINS` 含 `http://localhost:8000`，后端已是 8001~~ | ✅ 已修复 |
+| 8 | ~~`pyproject.toml` 依赖 `aiokafka`/`arq`/`elasticsearch`/`jinja2`/`aiofiles`，实际未使用~~ | ✅ 已修复 |
 | 9 | `services/social.py` 和 `services/review.py` 返回 dict 而非 ORM 对象 | ⬜ 待处理 |
 | 10 | ~~admin.py 顶部 `import sys as _sys` 和 `from pathlib import Path as _Path` 命名不规范~~ | ✅ 已修复 |
 | 11 | ~~WebSocket 端点 `/api/messages/ws` 未加入 `EXEMPT_PATHS`~~ | ✅ 已修复 |
@@ -938,7 +934,7 @@ chore: update dependencies
 | # | 问题 |
 |---|---|
 | 14 | `tasks/` 目录为空，ARQ 异步任务未实现 |
-| 15 | Elasticsearch 未实际集成 |
+| 15 | ~~Elasticsearch 未实际集成~~ | ✅ 已移除 |
 | 16 | 日志未结构化，缺少 request_id |
 | 17 | seed.py 硬编码 DB_URL |
 
@@ -955,15 +951,15 @@ Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
 ```
 
-### 可移除的依赖
+### 已移除的依赖
 
 ```toml
-# pyproject.toml 中以下依赖实际未使用，可安全移除：
-"aiokafka>=0.12.0"         # Kafka 已移除
-"arq>=0.26.0"              # tasks/ 目录为空
-"elasticsearch[async]>=8.17.0"  # elasticsearch_enabled=false
-"jinja2>=3.1.0"            # 无模板渲染
-"aiofiles>=24.1.0"         # 未发现使用
+# 以下依赖已从 pyproject.toml 中移除：
+# "aiokafka>=0.12.0"         # Kafka 已移除
+# "arq>=0.26.0"              # tasks/ 目录为空
+# "elasticsearch[async]>=8.17.0"  # 已完全移除
+# "jinja2>=3.1.0"            # 无模板渲染
+# "aiofiles>=24.1.0"         # 未发现使用
 ```
 
 ---
