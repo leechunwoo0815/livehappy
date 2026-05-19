@@ -1,3 +1,4 @@
+# ruff: noqa: E501, PLR0912, PLR0915, N806, B007, B905, F841
 """Comprehensive test data seeder for LiveHappy platform.
 Run: docker exec livehappy-backend python /app/scripts/seed.py
 """
@@ -740,7 +741,6 @@ async def run_seed(db_url: str | None = None):
         user_ids = []  # all user ids
         host_ids = []  # host user ids
         user_ids_for_regular = []  # non-host, non-admin user ids
-        admin_id = None
 
         for username, email, pw, role, score, bio, phone, nickname in USERS:
             uid = str(uuid.uuid4())
@@ -769,7 +769,7 @@ async def run_seed(db_url: str | None = None):
             elif role == "user":
                 user_ids_for_regular.append(uid)
             elif role == "admin":
-                admin_id = uid
+                pass
 
         print(f"  ✅ Created {len(USERS)} users")
 
@@ -945,7 +945,7 @@ async def run_seed(db_url: str | None = None):
 
         # ── Social Notes ──
         note_ids = []
-        for title, content in zip(NOTE_TITLES, NOTE_CONTENTS):
+        for title, content in zip(NOTE_TITLES, NOTE_CONTENTS, strict=False):
             nid = str(uuid.uuid4())
             author = choice(user_ids)
             likes = randint(0, 50)
