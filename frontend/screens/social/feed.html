@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }).join('')
     document.getElementById('feedList').innerHTML = html
   }).catch(function () {
-    document.getElementById('feedLoading').style.display = 'none'
+    document.getElementById('feedLoading').textContent = '加载失败，请检查网络后重试'
   })
 })
 </script>

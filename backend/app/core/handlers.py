@@ -52,7 +52,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         errors = []
         for err in exc.errors():
             loc = ".".join(str(p) for p in err.get("loc", []))
-            errors.append(f"{loc}: {err.get('msg', '')}")
+            msg = err.get("msg", "")
+            msg = _translate_validation_msg(msg)
+            errors.append(f"{loc}: {msg}")
         return JSONResponse(
             status_code=422,
             content={
@@ -91,3 +93,38 @@ def _http_status_to_code(status_code: int) -> str:
         500: "INTERNAL_ERROR",
     }
     return mapping.get(status_code, "UNKNOWN_ERROR")
+
+
+# Pydantic 校验错误英→中翻译表
+_VALIDATION_MSG_MAP: dict[str, str] = {
+    "field required": "该字段不能为空",
+    "value is not a valid email address": "邮箱格式不正确",
+    "value is not a valid email": "邮箱格式不正确",
+    "ensure this value is valid email": "邮箱格式不正确",
+    "not a valid email address": "邮箱格式不正确",
+    "value is not a valid integer": "请输入整数",
+    "value is not a valid floating point number": "请输入数字",
+    "ensure this value is greater than 0": "数值必须大于0",
+    "ensure this value is greater than or equal to 1": "数值至少为1",
+    "ensure this value has at least 2 items": "至少选择2项",
+    "ensure this value has at most 200 items": "最多选择200项",
+    "string should have at most 200 characters": "最多200个字符",
+    "string should have at most 100 characters": "最多100个字符",
+    "string should have at most 50 characters": "最多50个字符",
+    "string should have at most 255 characters": "最多255个字符",
+    "string should match pattern": "格式不正确",
+    "value could not be parsed to a number": "请输入有效数字",
+    "input is not a valid date or datetime": "请输入有效的日期格式",
+    "input is not a valid datetime": "请输入有效的日期时间格式",
+    "input is not a valid date": "请输入有效的日期格式",
+}
+
+
+def _translate_validation_msg(msg: str) -> str:
+    """将 Pydantic 英文校验错误翻译为中文。"""
+    msg_lower = msg.lower()
+    for en, zh in _VALIDATION_MSG_MAP.items():
+        if en in msg_lower:
+            return zh
+    # 未匹配到的保留原文（含具体格式要求时有参考价值）
+    return msg

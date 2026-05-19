@@ -63,8 +63,9 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!id) { document.getElementById('detailLoading').textContent = '缺少房源 ID'; return }
   apiClient.get('/listings/' + id).then(function (listing) {
     if (listing) { detailState.listing = listing; renderDetail(listing) }
+    else { document.getElementById('detailLoading').textContent = '房源不存在或已下架' }
   }).catch(function (e) {
-    document.getElementById('detailLoading').textContent = '加载失败，请检查网络连接'
+    document.getElementById('detailLoading').textContent = translateError(e.message)
   })
 })
 
@@ -118,7 +119,7 @@ function bookNow() {
     if (data) window.location.href = '/screens/bookings/confirm.html?id=' + data.id
   }).catch(function (e) {
     btn.disabled = false; btn.textContent = '立即预订'
-    errEl.textContent = e.message; errEl.style.display = 'block'
+    errEl.textContent = translateError(e.message); errEl.style.display = 'block'
   })
 }
 </script>

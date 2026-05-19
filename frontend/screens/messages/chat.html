@@ -64,7 +64,10 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!requireAuth()) return
   var user = getUser()
   chatState.convId = new URLSearchParams(location.search).get('id')
-  if (!chatState.convId) return
+  if (!chatState.convId) {
+    document.getElementById('chatLoading').textContent = '会话不存在'
+    return
+  }
   Promise.all([
     apiClient.get('/messages/conversations/' + chatState.convId + '/messages').catch(function () { return [] }),
     apiClient.get('/messages/conversations').catch(function () { return [] }),
@@ -121,7 +124,12 @@ function sendMessage() {
       renderMessages()
       scrollChat()
     }
-  }).catch(function () { chatState.sending = false; btn.disabled = false })
+  }).catch(function () {
+    chatState.sending = false; btn.disabled = false
+    var el = document.getElementById('chatMessages')
+    el.innerHTML += '<div class="text-center py-2" style="color:var(--danger);font-size:0.8125rem">消息发送失败，请重试</div>'
+    el.scrollTop = el.scrollHeight
+  })
 }
 </script>
 </body>

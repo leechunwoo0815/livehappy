@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('detailContent').innerHTML = html
     document.getElementById('detailContent').style.display = 'block'
   }).catch(function (e) {
-    showDetailError(e.message)
+    showDetailError(translateError(e.message))
   })
 })
 
@@ -99,7 +99,7 @@ function cancelBooking(id) {
   apiClient.post('/bookings/' + id + '/cancel', {}).then(function () {
     location.reload()
   }).catch(function (e) {
-    alert(e.message || '取消失败'); btn.disabled = false; btn.textContent = '取消订单'
+    showDetailError(translateError(e.message)); btn.disabled = false; btn.textContent = '取消订单'
   })
 }
 </script>

@@ -27,10 +27,10 @@
     <p>欢迎回来，请登录你的账户</p>
   </div>
   <div class="auth-error" id="loginError"></div>
-  <form id="loginForm">
+  <form id="loginForm" novalidate>
     <div class="field">
       <label class="field-label" for="email">邮箱</label>
-      <input class="input" id="email" type="email" placeholder="your@email.com" required>
+      <input class="input" id="email" type="text" placeholder="name@example.com" required>
     </div>
     <div class="field">
       <label class="field-label" for="password">密码</label>
@@ -43,28 +43,37 @@
   </div>
 </div>
 <script>
+function validateEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function showLoginError(msg) {
+  var e = document.getElementById('loginError');
+  e.textContent = msg;
+  e.classList.add('show');
+}
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const btn = document.getElementById('loginBtn');
-  const errDiv = document.getElementById('loginError');
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
+  var btn = document.getElementById('loginBtn');
+  var errDiv = document.getElementById('loginError');
+  var email = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  errDiv.classList.remove('show');
+  if (!email) { showLoginError('请输入邮箱地址'); return; }
+  if (!validateEmail(email)) { showLoginError('邮箱格式不正确，请检查后重新输入'); return; }
+  if (!password) { showLoginError('请输入密码'); return; }
   btn.disabled = true;
   btn.textContent = '登录中...';
-  errDiv.classList.remove('show');
   try {
     var data = await apiClient.post('/auth/login', { email, password });
     localStorage.setItem('token', data.access_token);
     if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
     var userData = await apiClient.get('/users/me');
     localStorage.setItem('user', JSON.stringify(userData));
-    const next = new URLSearchParams(location.search).get('next');
+    var next = new URLSearchParams(location.search).get('next');
     if (next) { window.location.href = next; return; }
-    const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    var savedUser = JSON.parse(localStorage.getItem('user') || '{}');
     if (savedUser.role === 'admin') { window.location.href = '/screens/admin/dashboard.html'; return; }
     window.location.href = '/';
-  } catch (e) {
-    errDiv.textContent = e.message || '登录失败';
+  } catch (err) {
+    errDiv.textContent = translateError(err.message) || '登录失败，请稍后再试';
     errDiv.classList.add('show');
   }
   btn.disabled = false;

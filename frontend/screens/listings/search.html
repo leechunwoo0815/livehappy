@@ -61,7 +61,7 @@
 <div class="container search-page" id="searchApp">
   <h2 class="mb-6">搜索房源</h2>
 
-  <form class="search-form" onsubmit="return searchListings()">
+  <form class="search-form" onsubmit="return searchListings()" novalidate>
     <div class="form-row">
       <div class="field">
         <label class="field-label">城市</label>
@@ -105,9 +105,18 @@ function searchListings() {
   var guests = document.getElementById('searchGuests').value
   if (city) params.set('city', city)
   if (guests) params.set('guests', guests)
+  var btn = document.querySelector('.search-btn')
+  btn.disabled = true; btn.textContent = '搜索中...'
   apiClient.get('/listings/search?' + params.toString()).then(function (data) {
+    btn.disabled = false; btn.textContent = '搜索'
     if (data) { searchState.listings = data; searchState.loaded = true; renderSearchResults(data) }
-  }).catch(function () {})
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = '搜索'
+    var empty = document.getElementById('searchEmpty')
+    empty.innerHTML = '<p style="font-size:2rem;margin-bottom:var(--space-2)">⚠️</p><p>搜索失败，请稍后重试</p>'
+    empty.style.display = 'block'
+    document.getElementById('searchPlaceholder').style.display = 'none'
+  })
   return false
 }
 

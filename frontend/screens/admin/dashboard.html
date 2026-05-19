@@ -102,8 +102,9 @@ async function loadDashboard() {
         container.appendChild(div);
       }
     }
-  } catch (e) {}
-}
+  } catch (e) {
+    var err = document.getElementById('errorMsg'); err.textContent = '加载统计数据失败，请刷新页面重试'; err.style.display = '';
+  }}
 async function approveListing(id, action) {
   try {
     await apiClient.post('/listings/' + id + '/approve', { action });

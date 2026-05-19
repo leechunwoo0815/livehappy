@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('bookingsList').innerHTML = html
   }).catch(function (e) {
     document.getElementById('bookingsLoading').style.display = 'none'
-    document.getElementById('bookingsList').innerHTML = '<div class="text-center py-8" style="color:var(--danger)">' + escapeHtml(e.message) + '</div>'
+    document.getElementById('bookingsList').innerHTML = '<div class="text-center py-8" style="color:var(--danger)">' + escapeHtml(translateError(e.message)) + '</div>'
   })
 })
 </script>

@@ -192,14 +192,21 @@ brew services start postgresql@14
 # 2. 创建数据库
 createdb stayhub
 
-# 3. 一键启动（自动创建 venv、安装依赖、运行迁移、启动前后端）
+# 3. 一键启动（自动创建 venv、安装依赖、运行迁移、启动后端）
 ./run.sh
 
 # 启动后访问：
-#    后端 API:  http://localhost:8001
-#    前端页面:  http://localhost:3001
+#    前端页面:  http://localhost:8001
 #    API 文档:  http://localhost:8001/docs
 #    健康检查:  http://localhost:8001/health
+
+# 4. 生成种子数据（可选，首次运行推荐）
+DATABASE_URL="postgresql+asyncpg://litianyu@localhost:5432/stayhub" PYTHONPATH=backend python backend/scripts/seed.py
+
+# 种子数据测试账号：
+#    管理员: admin@livehappy.com / admin123
+#    房东:   zhangming@livehappy.com / host123
+#    旅客:   liuyang@livehappy.com / user123
 ```
 
 ### run.sh 工作流程
@@ -209,20 +216,18 @@ createdb stayhub
 # 1. 创建 Python venv（如不存在）
 # 2. 安装依赖
 # 3. 运行 alembic upgrade head
-# 4. 启动后端 uvicorn --port 8001 --reload
-# 5. 启动前端 python3 -m http.server 3001 -d frontend/
-# Ctrl+C 同时停止前后端
+# 4. 启动后端 uvicorn --port 8001 --reload（同时服务前端静态文件）
+# Ctrl+C 停止
 ```
 
 ### 开发模式手动启动
 
 ```bash
-# 后端
+# 后端（同时服务前端静态文件，无需单独启动前端）
 source backend/.venv/bin/activate
 PYTHONPATH=backend uvicorn app.main:app --reload --port 8001
 
-# 前端（纯静态文件，无需构建）
-python3 -m http.server 3001 -d frontend/
+# 访问 http://localhost:8001 即可看到前端页面
 ```
 
 ### Redis 说明
@@ -244,7 +249,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 | 数据库 | PostgreSQL | 14+ | 本地 brew 安装，asyncpg 驱动 |
 | 迁移工具 | Alembic | >= 1.14 | schema 变更必须生成迁移文件 |
 | 缓存 | Redis（可选） | 7 | 内存降级替代，不影响启动 |
-| 前端 | vanilla JS + api-client.js | — | 纯 HTML 静态文件，python3 -m http.server |
+| 前端 | vanilla JS + api-client.js | — | 纯 HTML 静态文件，由后端 StaticFiles 挂载 |
 | 设计系统 | system.css | — | CSS 变量，亮/暗双主题 |
 | 监控 | Sentry | — | 错误追踪（需 SENTRY_DSN） |
 | CI/CD | GitHub Actions | — | push/PR 到 develop 触发 |
@@ -268,7 +273,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   ├── redis.py             # Redis 客户端 + _InMemoryRedis 降级实现
 │   │   ├── core/                # 核心基础设施
 │   │   │   ├── exceptions.py    # 自定义异常体系 (AppException 基类)
-│   │   │   └── handlers.py      # 全局异常处理器 → 统一 BaseResponse
+│   │   │   └── handlers.py      # 全局异常处理器 → 统一 BaseResponse + 校验错误中文化翻译
 │   │   ├── models/              # ORM 模型
 │   │   │   ├── base.py          # Base + TimestampMixin
 │   │   │   ├── user.py          # User
@@ -318,7 +323,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   │   ├── auth.py          # JWTMiddleware (全局) + get_current_user (依赖项)
 │   │   │   └── ratelimit.py     # 请求限流中间件 (Redis 降级时跳过)
 │   ├── scripts/
-│   │   └── seed.py              # 测试数据生成脚本
+│   │   └── seed.py              # 种子数据脚本，模拟真实业务流程生成全部 16 张表数据
 │   ├── tests/                   # 测试
 │   │   ├── conftest.py          # 测试配置：SQLite 内存 DB + Redis Mock + 依赖覆盖
 │   │   ├── test_auth.py         # 认证测试
@@ -340,7 +345,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 ├── frontend/
 │   ├── index.html               # 首页
 │   ├── css/system.css           # 设计系统（亮/暗双主题）
-│   ├── js/                      # api-client.js + app.js（无第三方依赖）
+│   ├── js/                      # api-client.js（API客户端）+ app.js（translateError/statusLabel/全局工具）
 │   └── screens/                 # 20+ 页面（auth/listings/bookings/...）
 ├── uploads/                     # 用户上传文件存储目录
 ├── scripts/                     # 运维脚本
@@ -479,6 +484,8 @@ class UnauthorizedException(AppException):# 401 UNAUTHORIZED
 - ❌ 在测试中使用真实 PostgreSQL
 - ❌ 禁止 `SELECT *`，只查询需要的字段
 - ❌ 禁止 N+1 查询，列表查询必须使用 `selectinload` 预加载关联数据
+- ❌ 前端 `<form>` 禁止省略 `novalidate`（防止浏览器原生英文错误提示）
+- ❌ 所有面向用户的错误消息必须使用中文，禁止出现英文系统错误提示
 
 ---
 
@@ -601,8 +608,9 @@ avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
 - 密码使用 bcrypt 哈希存储
 - 敏感信息不得出现在日志或错误响应中
 - 认证通过全局 `JWTMiddleware` + 路由级 `Depends(get_current_user)`
-- CORS 通过 `CORS_ORIGINS` 环境变量配置，默认 `http://localhost:3001`
+- CORS 通过 `CORS_ORIGINS` 环境变量配置，默认 `http://localhost:3001`（前端由后端服务时同源无需 CORS）
 - 文件上传限制：`.jpg/.jpeg/.png/.gif/.webp`，大小 ≤ `MAX_UPLOAD_SIZE_MB` MB
+- 所有面向用户的错误消息必须使用中文。后端 Pydantic 校验错误通过 `handlers.py:_translate_validation_msg()` 自动翻译；前端 catch 块必须使用 `translateError(e.message)` 包装（定义在 `app.js`），确保英文网络/API 错误不会泄漏到 UI；表单使用 `novalidate` + JavaScript 中文校验，禁止依赖浏览器原生英文错误提示
 
 ---
 
@@ -934,7 +942,8 @@ chore: update dependencies
 | Redis 内存降级 | ✅ | _InMemoryRedis 自动切换 |
 | 前端 vanilla JS | ✅ | api-client.js + app.js，无第三方依赖 |
 | 管理后台 | ✅ | 12 个 admin 端点 + 审计日志 |
-| 种子数据 | ✅ | seed.py + POST /api/admin/seed |
+| 种子数据 | ✅ | seed.py + POST /api/admin/seed，覆盖全部 16 张表（20用户/51房源/80预订/61支付/27评价/75通知/30会话/旅记/关注/收藏/审计日志） |
+| 前后端一体化 | ✅ | 后端 StaticFiles 挂载前端，`http://localhost:8001` 同时服务前端和 API |
 | 测试覆盖 | ✅ | 106 个测试 + 角色 fixtures + E2E 全流程模拟（52步） |
 | 路由无直接 SQL | ✅ | 所有查询下沉到 service 层 |
 | 收藏/心愿单 | ✅ | ListingFavorite 模型 + toggle/status/list API |
@@ -943,6 +952,9 @@ chore: update dependencies
 | 搜索排序 | ✅ | sort_by=price_asc/price_desc/newest |
 | 房东回复评价 | ✅ | POST /reviews/{id}/reply |
 | 通知自动触发 | ✅ | 支付/取消/评价/回复 自动创建通知 |
+| 前端表单验证 | ✅ | novalidate + 中文 JavaScript 校验，杜绝浏览器原生英文错误 |
+| 后端校验中文化 | ✅ | handlers.py `_translate_validation_msg()` 翻译 Pydantic 英文错误为中文 |
+| 前端错误消息中文化 | ✅ | `translateError()` 全局翻译 + statusLabel 补全 + 静默 catch 修复 + null 处理 + footer 中文化 |
 
 ### 严重问题（必须修复）
 
@@ -966,15 +978,25 @@ chore: update dependencies
 | 11 | ~~WebSocket 端点 `/api/messages/ws` 未加入 `EXEMPT_PATHS`~~ | ✅ 已修复 |
 | 12 | ~~User.is_active 同时用于"封禁"和"软删除"，语义不清晰~~ | ✅ 已修复 |
 | 13 | `Booking.status` 修改无事务保护 | ⬜ 待处理 |
+| 14 | ~~前端 `<form>` 无 `novalidate`，`type="email"` 触发浏览器原生英文错误~~ | ✅ 已修复 |
+| 15 | ~~Pydantic 校验错误消息为英文泄漏到前端~~ | ✅ 已修复（handlers.py 翻译） |
+| 16 | ~~前端 catch 块 e.message 直接展示（可能是英文网络错误）~~ | ✅ 已修复（`translateError()` 全局翻译） |
+| 17 | ~~statusLabel 缺少 completed/refunded/rejected/approved 映射~~ | ✅ 已修复 |
+| 18 | ~~多个页面静默 catch 无错误反馈（dashboard/feed/listings/messages）~~ | ✅ 已修复 |
+| 19 | ~~详情页 API 返回 null 时永久显示 loading~~ | ✅ 已修复（listings/detail/profile/chat） |
+| 20 | ~~admin/listings.html 编辑弹窗无 placeholder~~ | ✅ 已修复 |
+| 21 | ~~bookings/detail.html 使用 alert() 显示错误~~ | ✅ 已修复（改为内联错误） |
+| 22 | ~~index.html footer 英文 "All rights reserved"~~ | ✅ 已修复 |
+| 23 | ~~AI 聊天按钮 loading 显示 "..." 而非中文~~ | ✅ 已修复 |
 
 ### 低优先级
 
 | # | 问题 |
 |---|---|
-| 14 | `tasks/` 目录为空，ARQ 异步任务未实现 |
-| 15 | ~~Elasticsearch 未实际集成~~ | ✅ 已移除 |
-| 16 | 日志未结构化，缺少 request_id |
-| 17 | seed.py 硬编码 DB_URL |
+| 24 | `tasks/` 目录为空，ARQ 异步任务未实现 |
+| 25 | ~~Elasticsearch 未实际集成~~ | ✅ 已移除 |
+| 26 | 日志未结构化，缺少 request_id |
+| 27 | ~~seed.py 硬编码 DB_URL~~ | ✅ 已修复（优先读取 DATABASE_URL 环境变量） | |
 
 ### 重构路线图
 
@@ -989,6 +1011,8 @@ Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
 Phase P0   ✅ 核心功能补全 — 房东回复评价/通知自动触发/修改密码/订单详情含房源
 Phase P1   ✅ 体验增强 — 收藏/心愿单/搜索排序/消息未读数/分页标准化
+Phase P1.1 ✅ 前端表单验证中文化 — novalidate + JS校验 + 后端Pydantic错误翻译
+Phase P1.2 ✅ 全站前端UX中文化 — translateError全局翻译+statusLabel补全+静默catch修复+null处理+footer中文化
 Phase P2   ⬜ 待实现 — 用户公开主页/头像上传/关注粉丝列表/笔记评论列表/封面选择
 ```
 
@@ -1015,7 +1039,7 @@ Phase P2   ⬜ 待实现 — 用户公开主页/头像上传/关注粉丝列表/
 | `JWT_ALGORITHM` | JWT 算法 | ❌ | `HS256` |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | access_token 过期(分) | ❌ | `30` |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | refresh_token 过期(天) | ❌ | `7` |
-| `CORS_ORIGINS` | CORS 允许来源（逗号分隔） | ❌ | `http://localhost:3001` |
+| `CORS_ORIGINS` | CORS 允许来源（逗号分隔） | ❌ | `http://localhost:8001,http://localhost:3001` |
 | `DEEPSEEK_API_KEY` | DeepSeek AI 密钥 | ❌ | `""` |
 | `AI_ENABLED` | 是否启用 AI | ❌ | `false` |
 | `SENTRY_DSN` | Sentry 错误追踪 | ❌ | `""` |
@@ -1052,8 +1076,8 @@ alembic downgrade -1
 # 生成测试数据
 PYTHONPATH=backend python backend/scripts/seed.py
 
-# 前端（纯静态，无需构建）
-python3 -m http.server 3001 -d frontend/
+# 前端由后端 StaticFiles 挂载，无需单独启动
+# 访问 http://localhost:8001 即可
 ```
 
 ---
@@ -1072,6 +1096,8 @@ python3 -m http.server 3001 -d frontend/
 8. **新增模型必须注册到** `models/__init__.py` 的 `__all__` 列表
 9. **生成的代码必须通过**：`ruff check` + `ruff format` + `pytest`
 10. **不得引入新的第三方依赖**而不先征询开发者同意
+11. **前端 catch 块必须使用 `translateError(e.message)`**：禁止将 `e.message` 直接展示给用户，可能是英文网络错误
+12. **前端 catch 块禁止静默吞错**：必须给用户明确的中文反馈（loading 提示或错误提示），不能 `catch(function(){})`
 
 ### 项目特有约定
 

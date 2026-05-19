@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmContent').style.display = 'block'
   }).catch(function (e) {
     document.getElementById('confirmLoading').style.display = 'none'
-    document.getElementById('confirmError').textContent = e.message
+    document.getElementById('confirmError').textContent = translateError(e.message)
     document.getElementById('confirmError').style.display = 'block'
   })
 })

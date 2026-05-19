@@ -71,7 +71,7 @@ function sendAiMessage() {
   input.value = ''
   aiState.loading = true
   var btn = document.getElementById('aiSendBtn')
-  btn.disabled = true; btn.textContent = '...'
+  btn.disabled = true; btn.textContent = '发送中...'
   renderAiMessages()
   apiClient.post('/ai/chat', { content: text }).then(function (data) {
     aiState.loading = false; btn.disabled = false; btn.textContent = '发送'

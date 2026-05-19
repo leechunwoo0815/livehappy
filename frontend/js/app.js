@@ -53,7 +53,36 @@
     document.querySelectorAll('[data-nav-auth-mobile]').forEach(function (el) { el.innerHTML = authed ? mobileLoggedInHtml : mobileLoggedOutHtml })
   }
 
-  window.statusLabel = function (s) { return { pending: '待付款', paid: '已支付', confirmed: '已确认', cancelled: '已取消' }[s] || s }
+  window.statusLabel = function (s) { return { pending: '待付款', paid: '已支付', confirmed: '已确认', cancelled: '已取消', completed: '已完成', refunded: '已退款', rejected: '已拒绝', approved: '已通过' }[s] || s }
+
+  /* 将英文错误消息翻译为中文，确保用户永远看不到英文报错 */
+  var _ERR_MAP = [
+    [/Failed to fetch/i, '网络连接失败，请检查网络后重试'],
+    [/NetworkError/i, '网络连接失败，请检查网络后重试'],
+    [/Network request failed/i, '网络连接失败，请检查网络后重试'],
+    [/Load failed/i, '加载失败，请检查网络后重试'],
+    [/timeout/i, '请求超时，请稍后再试'],
+    [/Request timed out/i, '请求超时，请稍后再试'],
+    [/Unauthorized/i, '登录已过期，请重新登录'],
+    [/Forbidden/i, '无权执行此操作'],
+    [/Not Found/i, '请求的资源不存在'],
+    [/Internal Server Error/i, '服务器开小差了，请稍后再试'],
+    [/Bad Gateway/i, '服务器暂时不可用，请稍后再试'],
+    [/Service Unavailable/i, '服务器暂时不可用，请稍后再试'],
+    [/Conflict/i, '操作冲突，请刷新后重试'],
+    [/Too Many Requests/i, '请求过于频繁，请稍后再试'],
+    [/Validation/i, '数据格式不正确，请检查后重试'],
+  ];
+  window.translateError = function (msg) {
+    if (!msg) return '操作失败，请稍后再试';
+    for (var i = 0; i < _ERR_MAP.length; i++) {
+      if (_ERR_MAP[i][0].test(msg)) return _ERR_MAP[i][1];
+    }
+    // 如果包含中文字符，直接返回原文（后端已翻译的中文消息）
+    if (/[一-鿿]/.test(msg)) return msg;
+    // 英文消息一律替换为通用中文提示
+    return '操作失败，请稍后再试';
+  }
 
   window.getCoverImage = function (listing) {
     if (listing.cover_image) return listing.cover_image

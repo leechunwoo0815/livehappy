@@ -187,7 +187,7 @@ async def seed(
             _seed_running = False
 
     background_tasks.add_task(_run)
-    return BaseResponse(success=True, message="Seed started in background")
+    return BaseResponse(success=True, message="种子数据生成已启动")
 
 
 @router.get("/seed/status", response_model=BaseResponse)

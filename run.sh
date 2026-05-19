@@ -17,24 +17,19 @@ fi
 
 # 2. Run database migrations
 echo "Running migrations..."
-PYTHONPATH=backend alembic upgrade head
+cd backend && PYTHONPATH=. alembic upgrade head && cd ..
 
-# 3. Start backend (port 8001)
+# 3. Start backend (port 8001, serves frontend static files)
 echo "Starting backend on :8001..."
-PYTHONPATH=backend uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
+cd backend && PYTHONPATH=. uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
 BACKEND_PID=$!
-
-# 4. Start frontend (port 3001)
-echo "Starting frontend on :3001..."
-python3 -m http.server 3001 -d frontend/ &
-FRONTEND_PID=$!
+cd ..
 
 echo ""
-echo "✅ Backend:  http://localhost:8001"
-echo "✅ Frontend: http://localhost:3001"
-echo "   (Swagger: http://localhost:8001/docs)"
+echo "✅ LiveHappy: http://localhost:8001"
+echo "   (API 文档: http://localhost:8001/docs)"
 echo ""
-echo "Press Ctrl+C to stop both servers."
+echo "Press Ctrl+C to stop."
 
-trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit 0" SIGINT SIGTERM
+trap "kill $BACKEND_PID 2>/dev/null; exit 0" SIGINT SIGTERM
 wait

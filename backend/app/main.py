@@ -78,6 +78,11 @@ Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
 
-@app.get("/")
-async def root():
+@app.get("/api/info")
+async def api_info():
     return {"name": settings.app_name, "version": settings.app_version, "status": "ok"}
+
+# 前端静态文件挂载（必须在所有 API 路由之后）
+_frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"
+if _frontend_dir.is_dir():
+    app.mount("/", StaticFiles(directory=str(_frontend_dir), html=True), name="frontend")

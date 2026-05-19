@@ -79,9 +79,9 @@
 <div id="editModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
   <div style="background:var(--surface);border-radius:var(--radius-xl);padding:var(--space-6);width:90%;max-width:480px">
     <h3 style="margin-bottom:var(--space-4)">编辑房源</h3>
-    <div class="field"><label class="field-label">标题</label><input class="input" id="editTitle" type="text"></div>
-    <div class="field"><label class="field-label">城市</label><input class="input" id="editCity" type="text"></div>
-    <div class="field"><label class="field-label">价格（¥/晚）</label><input class="input" id="editPrice" type="number" min="0"></div>
+    <div class="field"><label class="field-label">标题</label><input class="input" id="editTitle" type="text" placeholder="请输入房源标题"></div>
+    <div class="field"><label class="field-label">城市</label><input class="input" id="editCity" type="text" placeholder="请输入城市"></div>
+    <div class="field"><label class="field-label">价格（¥/晚）</label><input class="input" id="editPrice" type="number" min="0" placeholder="每晚价格"></div>
     <div id="editError" style="display:none;padding:var(--space-2);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-3)"></div>
     <div class="flex gap-2" style="justify-content:flex-end;margin-top:var(--space-4)">
       <button class="btn btn-outline" onclick="closeEdit()">取消</button>
@@ -99,6 +99,7 @@ async function loadListings() {
   try {
     r = await apiClient.get('/admin/listings?page=' + listState.page + '&size=20' + (s ? '&status=' + s : ''));
   } catch (e) {
+    showError(translateError(e.message) || '加载失败，请刷新重试');
     r = { items: [], total: 0 };
   }
   listState.total = r.total || 0;
@@ -110,6 +111,9 @@ async function loadListings() {
       : '<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px" onclick="editItem(\'' + item.id + '\',\'' + escapeHtml(item.title) + '\',\'' + escapeHtml(item.city) + '\',' + item.price_per_night + ')">编辑</button> <button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px;color:var(--danger)" onclick="deleteItem(\'' + item.id + '\')">删除</button>';
     return '<tr><td><div style="font-weight:500">' + escapeHtml(item.title) + '</div></td><td>' + escapeHtml(item.city) + '</td><td>¥' + item.price_per_night + '</td><td>' + statusHtml + '</td><td>' + actionHtml + '</td></tr>';
   }).join('');
+  if (!r.items || r.items.length === 0) {
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);color:var(--fg-tertiary)">暂无数据</td></tr>';
+  }
   document.getElementById('paginationInfo').textContent = '共 ' + listState.total + ' 条';
   document.getElementById('prevBtn').disabled = listState.page <= 1;
   document.getElementById('nextBtn').disabled = listState.page * 20 >= listState.total;
@@ -150,7 +154,7 @@ async function saveEdit() {
     await apiClient.put('/listings/' + editingId, data);
     closeEdit(); loadListings();
   } catch (e) {
-    err.textContent = e.message || '保存失败';
+    err.textContent = translateError(e.message) || '保存失败，请重试';
     err.style.display = '';
   }
   btn.disabled = false; btn.textContent = '保存';

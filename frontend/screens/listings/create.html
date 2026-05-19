@@ -114,7 +114,7 @@ function submitListing() {
     document.getElementById('createForm').style.display = 'none'; document.getElementById('createSuccess').style.display = 'block'
   }).catch(function (e) {
     btn.disabled = false; btn.textContent = '提交审核'
-    errEl.textContent = e.message; errEl.style.display = 'block'
+    errEl.textContent = translateError(e.message); errEl.style.display = 'block'
   })
 }
 </script>
