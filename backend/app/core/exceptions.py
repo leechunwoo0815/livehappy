@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 
-class AppException(Exception):
+class AppException(Exception):  # noqa: N818
     def __init__(self, message: str, code: str, status_code: int):
         self.message = message
         self.code = code

@@ -31,7 +31,7 @@ EXEMPT_PATHS = {
 
 
 class JWTMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):  # noqa: PLR0911
         request.state.user_id = None
         request.state.user_role = None
 
