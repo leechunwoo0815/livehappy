@@ -254,7 +254,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 .
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI 入口，11 个路由模块注册
+│   │   ├── main.py              # FastAPI 入口，12 个路由模块注册
 │   │   ├── config.py            # pydantic-settings 配置类 + model_validator
 │   │   ├── database.py          # async SQLAlchemy 引擎 + get_db 依赖注入
 │   │   ├── redis.py             # Redis 客户端 + _InMemoryRedis 降级实现
@@ -279,12 +279,13 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   │   ├── listing.py       # ListingCreate / ListingUpdate / ListingResponse
 │   │   │   ├── message.py       # MessageSend / ConversationResponse
 │   │   │   └── user.py          # UserResponse / UserUpdate
-│   │   ├── routers/             # API 路由（11 个模块）
+│   │   ├── routers/             # API 路由（12 个模块）
 │   │   │   ├── auth.py          # 注册/登录/刷新Token
 │   │   │   ├── users.py         # 当前用户资料
 │   │   │   ├── listings.py      # 房源 CRUD + 搜索 + 审核 + 照片
 │   │   │   ├── bookings.py      # 预订/支付/取消/列表
 │   │   │   ├── messages.py      # 发送消息/会话列表/消息列表/已读
+│   │   │   ├── notifications.py # 通知列表/已读/全部已读
 │   │   │   ├── social.py        # 笔记/评论/点赞/关注
 │   │   │   ├── reviews.py       # 评价创建/查询
 │   │   │   ├── admin.py         # 后台管理（统计/审核/封禁/操作日志）
@@ -298,6 +299,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   │   ├── listing.py       # 房源 CRUD/搜索/审核
 │   │   │   ├── listing_photo.py # 照片管理
 │   │   │   ├── message.py       # 消息/会话管理
+│   │   │   ├── notification.py  # 通知管理（列表/已读/全部已读）
 │   │   │   ├── review.py        # 评价创建/查询
 │   │   │   ├── social.py        # 笔记/评论/点赞/关注
 │   │   │   ├── user.py          # 用户查询（get_by_id/get_by_email）
@@ -767,6 +769,9 @@ alembic current                              # 当前版本
 | POST | `/api/social/unfollow/{id}` | 是 | 取消关注 |
 | POST | `/api/reviews/` | 是 | 创建评价（1-5分） |
 | GET | `/api/reviews/listing/{id}` | 否 | 房源评价列表 |
+| GET | `/api/notifications/` | 是 | 通知列表（含未读数） |
+| POST | `/api/notifications/{id}/read` | 是 | 标记通知已读 |
+| POST | `/api/notifications/read-all` | 是 | 全部标记已读 |
 | POST | `/api/upload` | 是 | 文件上传（图片） |
 | GET | `/api/admin/stats` | 是(管理员) | 平台统计数据 |
 | POST | `/api/ai/chat` | 是 | AI 聊天 |
@@ -904,7 +909,7 @@ chore: update dependencies
 | 2 | ~~routers/users.py 路由里直接写 select(User)~~ | ~~违反"路由不写 SQL"架构规则~~ | ✅ 已修复 |
 | 3 | ~~routers/listings.py 审核端点无管理员权限检查~~ | ~~任何登录用户都能审核房源~~ | ✅ 已修复 |
 | 4 | **测试仅 69 个**（目标 80%+ 覆盖率） | 覆盖率不足 | 🟡 部分完成 |
-| 5 | **Notification 模型已定义但无 router/service** | 死代码 | ⬜ 待处理 |
+| 5 | ~~Notification 模型已定义但无 router/service~~ | ~~死代码~~ | ✅ 已修复 |
 | 6 | ~~评价条件写错：confirmed 应为 completed~~ | ~~未退房就能评价~~ | ✅ 已修复 |
 
 ### 中等问题
@@ -916,7 +921,7 @@ chore: update dependencies
 | 9 | `services/social.py` 和 `services/review.py` 返回 dict 而非 ORM 对象 | ⬜ 待处理 |
 | 10 | ~~admin.py 顶部 `import sys as _sys` 和 `from pathlib import Path as _Path` 命名不规范~~ | ✅ 已修复 |
 | 11 | ~~WebSocket 端点 `/api/messages/ws` 未加入 `EXEMPT_PATHS`~~ | ✅ 已修复 |
-| 12 | `User.is_active` 同时用于"封禁"和"软删除"，语义不清晰 | ⬜ 待处理 |
+| 12 | ~~User.is_active 同时用于"封禁"和"软删除"，语义不清晰~~ | ✅ 已修复 |
 | 13 | `Booking.status` 修改无事务保护 | ⬜ 待处理 |
 
 ### 低优先级
@@ -935,7 +940,7 @@ Phase 0-7  ✅ 已完成（安全修复/核心功能/测试/运维/前端/增强
 Phase 8    ✅ 基础设施框架 — exceptions/common/handlers/api-client
 Phase 9    ✅ 认证体系 — JWTMiddleware 重写/Token黑名单/logout/密码重置
 Phase 10   ✅ 统一响应 — 11个router返回BaseResponse/10个service用自定义异常/路由无直接SQL
-Phase 11   ⬜ 模型扩展 — AuditLog+Notification/User新字段/Alembic迁移/Admin补全
+Phase 11   ✅ 模型扩展 — is_banned字段/Notification router+service/Alembic迁移
 Phase 12   ⬜ 测试体系 — 角色fixtures/适配BaseResponse/新增测试/覆盖率≥80%
 Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
