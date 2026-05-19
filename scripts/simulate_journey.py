@@ -212,31 +212,150 @@ assert r.status_code == 200
 ok()
 
 # ============================================================
+print("\n=== HOST JOURNEY ===")
+# ============================================================
+
+step(26, "Host creates a new listing")
+r = c.post("/listings/", json={
+    "title": "房东测试房源", "city": "上海", "price_per_night": 500, "max_guests": 4,
+    "description": "精装修大床房"
+}, headers=hh)
+assert r.status_code == 201
+lid2 = r.json()["data"]["id"]
+ok(f"listing={lid2[:8]}... status=pending")
+
+step(27, "Host adds photo to listing")
+r = c.post(f"/listings/{lid2}/photos?url=/uploads/test.png&is_primary=true", headers=hh)
+assert r.status_code == 201
+ok("photo added")
+
+step(28, "Host lists photos")
+r = c.get(f"/listings/{lid2}/photos")
+assert r.status_code == 200
+assert len(r.json()["data"]) >= 1
+ok(f"{len(r.json()['data'])} photo(s)")
+
+step(29, "Admin approves host's listing")
+r = c.post(f"/listings/{lid2}/approve", json={"action": "approve"}, headers=ah)
+assert r.status_code == 200
+ok("approved")
+
+step(30, "Guest re-registers and books host's listing")
+guest_t3 = register(f"guest3_{SUF}", f"guest3_{SUF}@test.com")
+gh3 = headers(guest_t3)
+r = c.post("/bookings/", json={
+    "listing_id": lid2, "check_in": "2026-08-01", "check_out": "2026-08-05", "guests": 2
+}, headers=gh3)
+assert r.status_code == 201
+bid2 = r.json()["data"]["id"]
+ok(f"booking={bid2[:8]}...")
+
+step(31, "Guest pays for booking")
+r = c.post(f"/bookings/{bid2}/pay", headers=gh3)
+assert r.status_code == 200
+assert r.json()["data"]["host_payout"] == 1800  # 500*4 - 10% = 1800
+ok(f"host_payout={r.json()['data']['host_payout']}")
+
+step(32, "Host views bookings as host")
+r = c.get("/bookings/?role=host", headers=hh)
+assert r.status_code == 200
+host_bookings = r.json()["data"]
+assert len(host_bookings) >= 1
+ok(f"{len(host_bookings)} booking(s)")
+
+step(33, "Host views booking detail")
+r = c.get(f"/bookings/{bid2}", headers=hh)
+assert r.status_code == 200
+assert r.json()["data"]["id"] == bid2
+ok(f"status={r.json()['data']['status']}")
+
+step(34, "Host updates listing title")
+r = c.put(f"/listings/{lid2}", json={"title": "豪华大床房（已更新）"}, headers=hh)
+assert r.status_code == 200
+assert r.json()["data"]["title"] == "豪华大床房（已更新）"
+ok("title updated")
+
+step(35, "Complete booking + guest writes review")
+subprocess.run(
+    ["psql", "-d", "stayhub", "-c", f"UPDATE bookings SET status='completed' WHERE id='{bid2}'"],
+    capture_output=True, text=True,
+)
+r = c.post("/reviews/", params={
+    "listing_id": lid2, "booking_id": bid2, "rating": 4, "content": "不错但可以更好"
+}, headers=gh3)
+assert r.status_code == 200
+review_id = r.json()["data"]["id"]
+ok(f"review={review_id[:8]}...")
+
+step(36, "Host tries to reply to review")
+r = c.post(f"/reviews/{review_id}/reply", json={"content": "感谢您的评价！"}, headers=hh)
+# This endpoint doesn't exist yet — expect 405 or 404
+if r.status_code in (404, 405):
+    ok("GAP: reply endpoint not implemented yet")
+    results["issues"].append("P0: 房东回复评价 API 缺失（模型有 reply 字段但无端点）")
+else:
+    ok("reply sent")
+
+step(37, "Host views listing reviews")
+r = c.get(f"/reviews/listing/{lid2}")
+assert r.status_code == 200
+assert len(r.json()["data"]) >= 1
+ok(f"{len(r.json()['data'])} review(s)")
+
+step(38, "Host cancels another booking (if any)")
+# Create a new pending booking for host to cancel
+r = c.post("/bookings/", json={
+    "listing_id": lid2, "check_in": "2026-09-01", "check_out": "2026-09-03", "guests": 1
+}, headers=gh3)
+assert r.status_code == 201
+bid3 = r.json()["data"]["id"]
+r = c.post(f"/bookings/{bid3}/cancel", json={"reason": "房东取消"}, headers=hh)
+assert r.status_code == 200
+ok("host cancelled booking")
+
+step(39, "Host deletes listing (soft delete)")
+# Create a throwaway listing to delete
+r = c.post("/listings/", json={
+    "title": "待删除房源", "city": "测试", "price_per_night": 1, "max_guests": 1
+}, headers=hh)
+assert r.status_code == 201
+lid3 = r.json()["data"]["id"]
+r = c.delete(f"/listings/{lid3}", headers=hh)
+assert r.status_code == 200
+ok("soft deleted")
+
+step(40, "Deleted listing not in search")
+r = c.get("/listings/search?city=测试")
+found = [x for x in r.json()["data"] if x["id"] == lid3]
+assert len(found) == 0
+ok("correctly hidden from search")
+
+# ============================================================
 print("\n=== ADMIN JOURNEY ===")
 # ============================================================
 
-step(26, "Admin views stats")
+step(41, "Admin views stats")
 r = c.get("/admin/stats", headers=ah)
 assert r.status_code == 200
 d = r.json()["data"]
 ok(f"users={d['total_users']} listings={d['total_listings']} bookings={d['total_bookings']}")
 
-step(27, "Admin lists users")
+step(42, "Admin lists users")
 r = c.get("/admin/users", headers=ah)
 assert r.status_code == 200
 ok(f"{len(r.json()['data']['items'])} users")
 
-step(28, "Admin views audit logs")
+step(43, "Admin views audit logs")
 r = c.get("/admin/audit-logs", headers=ah)
 assert r.status_code == 200
 ok(f"{len(r.json()['data']['items'])} logs")
 
-step(29, "Admin bans guest")
+step(44, "Admin bans guest")
 r = c.post(f"/admin/users/{guest_id}/ban", headers=ah)
 assert r.status_code == 200
 ok("banned")
 
-step(30, "Banned guest gets 403")
+step(45, "Banned guest gets 403")
 r = c.get("/bookings/", headers=gh)
 # After logout, token is blacklisted. Re-login.
 guest_t2 = register(f"guest2_{SUF}", f"guest2_{SUF}@test.com")
@@ -249,17 +368,17 @@ r = c.get("/bookings/", headers=gh2)
 assert r.status_code == 403, f"expected 403, got {r.status_code}"
 ok("correctly blocked (403)")
 
-step(31, "Admin unbans guest")
+step(46, "Admin unbans guest")
 r = c.post(f"/admin/users/{guest_id}/unban", headers=ah)
 assert r.status_code == 200
 ok("unbanned")
 
-step(32, "Admin changes user role")
+step(47, "Admin changes user role")
 r = c.put(f"/admin/users/{guest_id}/role", json={"role": "host"}, headers=ah)
 assert r.status_code == 200
 ok("role changed to host")
 
-step(33, "Non-admin gets 403 on admin endpoints")
+step(48, "Non-admin gets 403 on admin endpoints")
 # Re-login as the unbanned guest (old token was blacklisted by logout)
 from httpx import Client as _C
 login_r = _C(base_url=BASE, timeout=10, trust_env=False).post("/auth/login", json={
