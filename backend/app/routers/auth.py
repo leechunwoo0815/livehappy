@@ -41,7 +41,7 @@ from app.services.auth import (
     store_refresh_token,
     verify_password,
 )
-from app.services.user import get_user_by_email, get_user_by_id
+from app.services.user import change_password, get_user_by_email, get_user_by_id
 
 router = APIRouter()
 
@@ -209,3 +209,14 @@ async def reset_password(
     await redis.delete(f"reset:{token}")
 
     return BaseResponse(success=True, message="密码已重置")
+
+
+@router.post("/change-password", response_model=BaseResponse)
+async def change_pw(
+    old_password: str = Body(...),
+    new_password: str = Body(...),
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await change_password(db, user_id, old_password, new_password)
+    return BaseResponse(success=True, message="密码已修改")

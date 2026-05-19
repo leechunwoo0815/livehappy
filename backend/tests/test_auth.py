@@ -115,3 +115,41 @@ async def test_reset_password(client: AsyncClient):
         json={"email": "reset@test.com", "password": "NewPass123!"},
     )
     assert login.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_password(client: AsyncClient):
+    reg = await client.post(
+        "/api/auth/register",
+        json={"username": "chgpw", "email": "chgpw@test.com", "password": "Test1234!"},
+    )
+    token = reg.json()["data"]["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.post(
+        "/api/auth/change-password",
+        json={"old_password": "Test1234!", "new_password": "NewSecure1!"},
+        headers=headers,
+    )
+    assert resp.status_code == 200
+    # Login with new password
+    login = await client.post(
+        "/api/auth/login",
+        json={"email": "chgpw@test.com", "password": "NewSecure1!"},
+    )
+    assert login.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_change_password_wrong_old(client: AsyncClient):
+    reg = await client.post(
+        "/api/auth/register",
+        json={"username": "chgpw2", "email": "chgpw2@test.com", "password": "Test1234!"},
+    )
+    token = reg.json()["data"]["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.post(
+        "/api/auth/change-password",
+        json={"old_password": "wrongpass", "new_password": "NewSecure1!"},
+        headers=headers,
+    )
+    assert resp.status_code == 400
