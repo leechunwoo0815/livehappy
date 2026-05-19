@@ -81,6 +81,9 @@ def mock_redis():
     import app.routers.health as rh
 
     rh.get_redis = _get_mock_redis
+    import app.services.admin as sadm
+
+    sadm.get_redis = _get_mock_redis
     yield
 
 
