@@ -9,7 +9,6 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.core.handlers import register_exception_handlers
 from app.database import engine
-from app.elasticsearch import close_elasticsearch, init_elasticsearch
 from app.middleware.auth import JWTMiddleware
 from app.middleware.ratelimit import RateLimitMiddleware
 from app.models import Base
@@ -37,9 +36,7 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     await init_redis()
-    await init_elasticsearch()
     yield
-    await close_elasticsearch()
     await close_redis()
     await engine.dispose()
 

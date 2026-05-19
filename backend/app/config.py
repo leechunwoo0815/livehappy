@@ -10,9 +10,6 @@ class Settings(BaseSettings):
     database_url: str = ""
     redis_url: str = "redis://localhost:6379/0"
 
-    elasticsearch_hosts: list[str] = ["http://localhost:9200"]
-    elasticsearch_enabled: bool = False
-
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
