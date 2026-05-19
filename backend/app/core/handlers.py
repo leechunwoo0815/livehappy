@@ -4,7 +4,7 @@
 注册方式：在 main.py 中调用 register_exception_handlers(app)
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 import logging
 
