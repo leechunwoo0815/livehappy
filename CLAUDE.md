@@ -20,7 +20,7 @@
 | 房源域 | 发布/审核/搜索/展示/照片 | Listing, ListingPhoto | `/api/listings` |
 | 交易域 | 预订/支付(10%平台费)/退款 | Booking, Payment | `/api/bookings` |
 | 消息域 | 站内信/会话/已读状态 | Conversation, Message | `/api/messages` |
-| 社交域 | 笔记/评论/点赞/关注 | Note, NoteComment, NoteLike, UserFollow | `/api/social` |
+| 社交域 | 笔记/评论/点赞/关注/收藏房源 | Note, NoteComment, NoteLike, UserFollow, ListingFavorite | `/api/social` |
 | 评价域 | 评分(1-5分)/房东回复 | Review | `/api/reviews` |
 | 管理域 | 后台统计/房源审核/用户管理/操作日志 | AuditLog | `/api/admin` |
 | 上传域 | 文件上传（图片限制） | — | `/api/upload` |
@@ -34,6 +34,7 @@
 - 平台抽佣 10%，`host_payout = total_price - platform_fee`
 - 房源搜索支持按城市/价格区间/入住人数筛选，支持排序（price_asc/price_desc/newest），默认分页 20 条/页
 - 每个用户对同一笔记只能点赞一次（UniqueConstraint）
+- 每个用户对同一房源只能收藏一次（UniqueConstraint）
 - 每个用户对同一房源只能发布一条评价（booking_id 唯一约束）
 - 用户角色：`user`（普通用户）/ `host`（房东）/ `admin`（管理员）
 - 封禁用户：管理员可封禁用户，被封禁用户的所有请求返回 403
@@ -91,17 +92,18 @@ pending ──(旅客支付)──→ confirmed ──(退房日期后)──→
 #### 3. 评价域 (Review)
 
 **业务规则：**
-- **前置条件**：`booking.status == "completed"`（已退房才能评价）（⚠️ 当前代码写的是 `confirmed`，需要修复）
+- **前置条件**：`booking.status == "completed"`（已退房才能评价）
 - 每个预订只能评价一次（`booking_id` 唯一约束）
 - 评分范围 1-5 分
-- 房东可以回复评价（`reply` 字段）
+- 房东可以回复评价（`reply` 字段），每个评价只能回复一次
 - 评价创建后不可修改
 
 **关联影响：**
 - 评价不影响预订状态
-- 评价会影响房源的平均评分（未来扩展）
+- 评价会影响房源的平均评分（`get_listing_detail` 返回 `avg_rating` 和 `review_count`）
+- 评价/回复自动触发通知给对方
 
-#### 4. 社交域 (Note + Follow)
+#### 4. 社交域 (Note + Follow + Favorite)
 
 **笔记业务规则：**
 - 任何登录用户都可以创建笔记
@@ -115,6 +117,12 @@ pending ──(旅客支付)──→ confirmed ──(退房日期后)──→
 - 每对用户只能关注一次（`UniqueConstraint("follower_id", "following_id")`）
 - 关注/取关是单向的（A 关注 B ≠ B 关注 A）
 
+**收藏业务规则：**
+- 每个用户对同一房源只能收藏一次（`UniqueConstraint("user_id", "listing_id")`）
+- 收藏/取消收藏使用 toggle 模式（POST 同一端点，已收藏则取消）
+- 收藏列表返回关联房源摘要信息（标题/城市/价格/封面）
+- 房源被删除（is_active=False）后从收藏列表自动隐藏
+
 #### 5. 消息域 (Message)
 
 **业务规则：**
@@ -122,6 +130,7 @@ pending ──(旅客支付)──→ confirmed ──(退房日期后)──→
 - 会话是两人之间的（`participant_one` + `participant_two`）
 - 每个会话有独立的未读计数（`unread_count_one` / `unread_count_two`）
 - 标记已读时：将对方发的所有未读消息设为 `is_read=True`，清零自己的未读计数
+- 消息未读总数接口：汇总所有会话的未读计数（`GET /api/messages/unread-count`）
 - 支持 WebSocket 实时推送（`/api/messages/ws`），连接时需传 JWT token
 
 #### 6. 管理域 (Admin)
@@ -133,7 +142,7 @@ pending ──(旅客支付)──→ confirmed ──(退房日期后)──→
 | 注册/登录/刷新Token | ✅ | ✅ | ✅ |
 | 搜索/查看房源 | ✅ | ✅ | ✅ |
 | 创建预订/支付/取消 | ✅ | ✅ | ✅ |
-| 发消息/社交/评价 | ✅ | ✅ | ✅ |
+| 发消息/社交/评价/收藏 | ✅ | ✅ | ✅ |
 | 创建/编辑/删除自己的房源 | ❌ | ✅ | ✅ |
 | 查看自己的房东订单 | ❌ | ✅ | ✅ |
 | 审核房源（approve/reject） | ❌ | ❌ | ✅ |
@@ -266,7 +275,8 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   │   ├── listing.py       # Listing + ListingPhoto
 │   │   │   ├── booking.py       # Booking + Payment
 │   │   │   ├── message.py       # Conversation + Message
-│   │   │   ├── social.py        # Note + NoteComment + NoteLike + UserFollow
+│   │   │   ├── notification.py  # Notification
+│   │   │   ├── social.py        # Note + NoteComment + NoteLike + UserFollow + ListingFavorite
 │   │   │   ├── review.py        # Review
 │   │   │   ├── chat.py          # ChatMessage
 │   │   │   └── audit_log.py     # AuditLog（管理员操作日志）
@@ -276,16 +286,18 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   │   ├── booking.py       # BookingCreate / BookingResponse / PaymentResponse
 │   │   │   ├── listing.py       # ListingCreate / ListingUpdate / ListingResponse
 │   │   │   ├── message.py       # MessageSend / ConversationResponse
-│   │   │   └── user.py          # UserResponse / UserUpdate
+│   │   │   ├── notification.py  # NotificationResponse
+│   │   │   ├── social.py        # NoteCreate
+│   │   │   └── user.py          # UserResponse
 │   │   ├── routers/             # API 路由（12 个模块）
-│   │   │   ├── auth.py          # 注册/登录/刷新Token
-│   │   │   ├── users.py         # 当前用户资料
-│   │   │   ├── listings.py      # 房源 CRUD + 搜索 + 审核 + 照片
-│   │   │   ├── bookings.py      # 预订/支付/取消/列表
-│   │   │   ├── messages.py      # 发送消息/会话列表/消息列表/已读
+│   │   │   ├── auth.py          # 注册/登录/刷新Token/修改密码
+│   │   │   ├── users.py         # 当前用户资料/收藏列表
+│   │   │   ├── listings.py      # 房源 CRUD + 搜索 + 审核 + 照片 + 收藏
+│   │   │   ├── bookings.py      # 预订/支付/取消/列表/详情含房源
+│   │   │   ├── messages.py      # 发送消息/会话列表/消息列表/已读/未读数
 │   │   │   ├── notifications.py # 通知列表/已读/全部已读
 │   │   │   ├── social.py        # 笔记/评论/点赞/关注
-│   │   │   ├── reviews.py       # 评价创建/查询
+│   │   │   ├── reviews.py       # 评价创建/查询/房东回复
 │   │   │   ├── admin.py         # 后台管理（统计/审核/封禁/操作日志）
 │   │   │   ├── upload.py        # 文件上传（图片限制）
 │   │   │   ├── health.py        # 健康检查（DB + Redis 状态）
@@ -293,14 +305,14 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   │   ├── services/            # 业务逻辑层
 │   │   │   ├── admin.py         # 管理后台（统计/审核/封禁/审计日志）
 │   │   │   ├── auth.py          # 密码哈希/JWT 生成
-│   │   │   ├── booking.py       # 预订/支付/退款/列表
-│   │   │   ├── listing.py       # 房源 CRUD/搜索/审核
+│   │   │   ├── booking.py       # 预订/支付/退款/列表/详情含房源
+│   │   │   ├── listing.py       # 房源 CRUD/搜索(排序)/审核
 │   │   │   ├── listing_photo.py # 照片管理
-│   │   │   ├── message.py       # 消息/会话管理
+│   │   │   ├── message.py       # 消息/会话管理/未读数
 │   │   │   ├── notification.py  # 通知管理（列表/已读/全部已读）
-│   │   │   ├── review.py        # 评价创建/查询
-│   │   │   ├── social.py        # 笔记/评论/点赞/关注
-│   │   │   ├── user.py          # 用户查询（get_by_id/get_by_email）
+│   │   │   ├── review.py        # 评价创建/查询/房东回复
+│   │   │   ├── social.py        # 笔记/评论/点赞/关注/收藏
+│   │   │   ├── user.py          # 用户查询/get_by_id/get_by_email/修改密码
 │   │   │   └── ai.py            # AI 聊天
 │   │   ├── middleware/          # 中间件
 │   │   │   ├── auth.py          # JWTMiddleware (全局) + get_current_user (依赖项)
@@ -308,10 +320,21 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 │   ├── scripts/
 │   │   └── seed.py              # 测试数据生成脚本
 │   ├── tests/                   # 测试
-│   │   ├── conftest.py          # 测试配置：SQLite 内存 DB + 依赖覆盖
+│   │   ├── conftest.py          # 测试配置：SQLite 内存 DB + Redis Mock + 依赖覆盖
 │   │   ├── test_auth.py         # 认证测试
 │   │   ├── test_bookings.py     # 预订测试
 │   │   ├── test_listings.py     # 房源测试
+│   │   ├── test_listings_extended.py  # 房源扩展测试
+│   │   ├── test_messages.py     # 消息测试
+│   │   ├── test_social.py       # 社交测试
+│   │   ├── test_reviews.py      # 评价测试
+│   │   ├── test_admin.py        # 管理测试
+│   │   ├── test_notifications.py # 通知测试
+│   │   ├── test_upload_health.py # 上传/健康测试
+│   │   ├── test_users.py        # 用户测试
+│   │   ├── test_ai.py           # AI 测试
+│   │   ├── test_p1_features.py  # P1 功能测试（收藏/排序/详情/未读数）
+│   │   ├── test_e2e_simulation.py # E2E 全流程模拟（旅客/房东/管理员）
 │   │   └── test_root.py         # 根路由测试
 │   └── alembic/                 # 数据库迁移
 ├── frontend/
@@ -351,6 +374,7 @@ Redis **完全可选**。项目使用 `_InMemoryRedis` 内存替代实现：
 ```
 User (1) ──── (*) Listing          # 房东发布房源
 User (1) ──── (*) Booking          # 旅客创建预订
+User (1) ──── (*) ListingFavorite  # 用户收藏房源
 Listing (1) ── (*) Booking         # 房源关联多个预订
 Listing (1) ── (*) ListingPhoto    # 房源有多张照片
 Booking (1) ── (1) Payment         # 预订对应一笔支付
@@ -597,19 +621,21 @@ avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
 | 测试文件 | 覆盖模块 | 测试数量 | 测试内容 |
 |---|---|---|---|
 | `test_root.py` | 根路由 | 1 | 健康检查 |
-| `test_auth.py` | 认证 | 5 | 注册/登录/Token刷新/me/密码重置 |
-| `test_users.py` | 用户 | 4 | 用户资料/未认证/无效Token |
-| `test_listings.py` | 房源 | 7 | 创建/搜索/详情/审核/照片 |
-| `test_listings_extended.py` | 房源扩展 | — | 更多房源场景 |
-| `test_bookings.py` | 预订 | 4 | 创建/支付/取消/列表 |
-| `test_messages.py` | 消息 | — | 发送/会话/已读 |
-| `test_social.py` | 社交 | 10 | 笔记/点赞/评论/关注 |
-| `test_reviews.py` | 评价 | 4 | 创建/评分/重复/列表 |
-| `test_admin.py` | 管理 | — | 统计/审核/封禁/审计日志 |
-| `test_ai.py` | AI | — | AI 聊天 |
-| `test_notifications.py` | 通知 | 6 | 列表/已读/全部已读/未认证 |
-| `test_upload_health.py` | 上传/健康 | 4 | 文件上传/格式校验/健康检查 |
-| **总计** | | **103** | |
+| `test_auth.py` | 认证 | 11 | 注册/登录/Token刷新/me/密码重置/登出/修改密码 |
+| `test_users.py` | 用户 | 4 | 用户资料/未认证/无效Token/refresh_token拒绝 |
+| `test_listings.py` | 房源 | 5 | 创建/搜索/详情/更新/删除 |
+| `test_listings_extended.py` | 房源扩展 | 9 | 审核/拒绝/照片/权限/搜索 |
+| `test_bookings.py` | 预订 | 10 | 创建/支付/取消/列表/重叠/超员/过去日期/无效日期/重复支付/房东列表 |
+| `test_messages.py` | 消息 | 5 | 发送/会话/消息列表/已读/未认证 |
+| `test_social.py` | 社交 | 10 | 笔记/点赞/评论/关注/取关 |
+| `test_reviews.py` | 评价 | 9 | 创建/评分/重复/列表/未完成/非车主/房东回复/重复回复/非房东 |
+| `test_admin.py` | 管理 | 20 | 统计/审核/封禁/解封/角色/删除/审计日志/权限 |
+| `test_ai.py` | AI | 2 | AI聊天/未认证 |
+| `test_notifications.py` | 通知 | 6 | 列表/已读/全部已读/未找到/未认证 |
+| `test_upload_health.py` | 上传/健康 | 4 | 文件上传/格式/未认证/健康检查 |
+| `test_p1_features.py` | P1功能 | 7 | 收藏toggle/状态/列表/排序/订单详情含房源/未读数 |
+| `test_e2e_simulation.py` | E2E全流程 | 3 | 旅客26步/房东14步/管理员12步 |
+| **总计** | | **106** | |
 
 ### 测试基础设施
 
@@ -896,7 +922,7 @@ chore: update dependencies
 ## 11. 架构审计与重构路线图
 
 > 最后审计日期：2026-05-19
-> 重构进度：Phase 0-12 已完成
+> 重构进度：Phase 0-14 已完成，P0+P1 功能已实现
 
 ### 架构完成度
 
@@ -909,8 +935,14 @@ chore: update dependencies
 | 前端 vanilla JS | ✅ | api-client.js + app.js，无第三方依赖 |
 | 管理后台 | ✅ | 12 个 admin 端点 + 审计日志 |
 | 种子数据 | ✅ | seed.py + POST /api/admin/seed |
-| 测试覆盖 | ✅ | 106 个测试 + 角色 fixtures + E2E 全流程模拟 |
+| 测试覆盖 | ✅ | 106 个测试 + 角色 fixtures + E2E 全流程模拟（52步） |
 | 路由无直接 SQL | ✅ | 所有查询下沉到 service 层 |
+| 收藏/心愿单 | ✅ | ListingFavorite 模型 + toggle/status/list API |
+| 订单详情含房源 | ✅ | booking detail 返回 listing 子对象 |
+| 消息未读数 | ✅ | GET /messages/unread-count 汇总会话未读 |
+| 搜索排序 | ✅ | sort_by=price_asc/price_desc/newest |
+| 房东回复评价 | ✅ | POST /reviews/{id}/reply |
+| 通知自动触发 | ✅ | 支付/取消/评价/回复 自动创建通知 |
 
 ### 严重问题（必须修复）
 
@@ -955,6 +987,9 @@ Phase 11   ✅ 模型扩展 — is_banned字段/Notification router+service/Alem
 Phase 12   ✅ 测试体系 — 角色fixtures/新增notification+upload+health测试/106个测试
 Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
+Phase P0   ✅ 核心功能补全 — 房东回复评价/通知自动触发/修改密码/订单详情含房源
+Phase P1   ✅ 体验增强 — 收藏/心愿单/搜索排序/消息未读数/分页标准化
+Phase P2   ⬜ 待实现 — 用户公开主页/头像上传/关注粉丝列表/笔记评论列表/封面选择
 ```
 
 ### 已移除的依赖
@@ -981,8 +1016,6 @@ Phase 14   ✅ Docker移除 & 本地化（已完成）
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | access_token 过期(分) | ❌ | `30` |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | refresh_token 过期(天) | ❌ | `7` |
 | `CORS_ORIGINS` | CORS 允许来源（逗号分隔） | ❌ | `http://localhost:3001` |
-| `ELASTICSEARCH_HOSTS` | ES 地址 | ❌ | `["http://localhost:9200"]` |
-| `ELASTICSEARCH_ENABLED` | 是否启用 ES | ❌ | `false` |
 | `DEEPSEEK_API_KEY` | DeepSeek AI 密钥 | ❌ | `""` |
 | `AI_ENABLED` | 是否启用 AI | ❌ | `false` |
 | `SENTRY_DSN` | Sentry 错误追踪 | ❌ | `""` |
