@@ -747,6 +747,7 @@ alembic current                              # 当前版本
 | POST | `/api/auth/register` | 否 | 注册新用户 |
 | POST | `/api/auth/login` | 否 | 登录 |
 | POST | `/api/auth/refresh` | 否 | 刷新 Token |
+| POST | `/api/auth/change-password` | 是 | 修改密码 |
 | GET | `/api/users/me` | 是 | 当前用户资料 |
 | GET | `/api/listings/search` | 否 | 搜索房源（城市/价格/人数/分页） |
 | GET | `/api/listings/{id}` | 否 | 房源详情 + 照片 |
@@ -774,6 +775,7 @@ alembic current                              # 当前版本
 | POST | `/api/social/unfollow/{id}` | 是 | 取消关注 |
 | POST | `/api/reviews/` | 是 | 创建评价（1-5分） |
 | GET | `/api/reviews/listing/{id}` | 否 | 房源评价列表 |
+| POST | `/api/reviews/{id}/reply` | 是 | 房东回复评价 |
 | GET | `/api/notifications/` | 是 | 通知列表（含未读数） |
 | POST | `/api/notifications/{id}/read` | 是 | 标记通知已读 |
 | POST | `/api/notifications/read-all` | 是 | 全部标记已读 |
