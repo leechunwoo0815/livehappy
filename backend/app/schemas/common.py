@@ -15,14 +15,14 @@ from pydantic import BaseModel
 T = TypeVar("T")
 
 
-class BaseResponse(BaseModel, Generic[T]):
+class BaseResponse(BaseModel, Generic[T]):  # noqa: UP046
     success: bool
     data: T | None = None
     message: str | None = None
     code: str | None = None
 
 
-class PaginatedData(BaseModel, Generic[T]):
+class PaginatedData(BaseModel, Generic[T]):  # noqa: UP046
     items: list[T]
     total: int
     page: int
