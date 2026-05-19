@@ -47,3 +47,6 @@ allure-results/
 # Build
 logs/
 *.log
+
+# Uploads (user-generated content)
+uploads/

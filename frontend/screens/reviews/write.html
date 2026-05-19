@@ -5,46 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>写评价 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
 .star-input{display:flex;gap:var(--space-1);flex-direction:row-reverse;justify-content:flex-end}
-.star-input button{font-size:2rem;line-height:1;color:var(--border);transition:color var(--transition-fast);padding:0;background:none}
-.star-input button:hover,.star-input button:hover~button,.star-input button.selected,.star-input button.selected~button{color:var(--fg)}
-.star-input button:active{transform:scale(1.2)}
+.star-input button{font-size:2rem;line-height:1;color:var(--border);transition:color var(--transition-fast);padding:0;background:none;cursor:pointer;border:none}
+.star-input button:hover,.star-input button:hover~button,.star-input button.selected,.star-input button.selected~button{color:var(--warning)}
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
-    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link">我的订单</a></div>
-    <div class="nav-actions"><button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
-      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-    </button></div>
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link" data-auth-required>我的订单</a></div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
+      <div data-nav-auth></div>
+    </div>
   </div>
 </nav>
 
-<div class="page">
+<div class="page" id="writeReviewApp">
   <div class="container" style="max-width:560px">
-    <a href="list.html" class="btn btn-ghost btn-sm mb-4" style="color:var(--fg-secondary)">← 返回评价列表</a>
+    <a href="#" class="btn btn-ghost btn-sm mb-4" style="color:var(--fg-secondary)" onclick="history.back();return false">← 返回</a>
     <h1 class="mb-2">写评价</h1>
-    <p style="font-size:0.9375rem;color:var(--fg-secondary);margin-bottom:var(--space-6)">分享你的住宿体验，帮助其他旅行者做出更好的选择</p>
+    <p style="font-size:0.9375rem;color:var(--fg-secondary);margin-bottom:var(--space-6)">分享你的住宿体验</p>
 
-    <div class="card">
-      <div class="flex gap-4 mb-6">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80" alt="" style="width:100px;height:70px;object-fit:cover;border-radius:var(--radius-md);flex-shrink:0">
-        <div>
-          <div style="font-weight:600;font-size:1.0625rem">西湖畔·湖景精品酒店</div>
-          <div style="font-size:0.875rem;color:var(--fg-secondary)">入住时间：2026年3月10日 — 3月12日</div>
-        </div>
-      </div>
+    <div id="reviewSuccess" style="display:none" class="alert alert-success mb-4">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div><div style="font-weight:500">评价提交成功！</div></div>
+    </div>
 
+    <div id="reviewError" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-4)"></div>
+
+    <div class="card" id="reviewForm">
       <div class="form-group">
-        <label class="form-label">总体评分 <span style="color:var(--danger)">*</span></label>
+        <label class="form-label">评分 <span style="color:var(--danger)">*</span></label>
         <div class="star-input" id="starInput">
           <button type="button" data-star="5" onclick="setStar(5)">★</button>
           <button type="button" data-star="4" onclick="setStar(4)">★</button>
@@ -52,118 +49,60 @@
           <button type="button" data-star="2" onclick="setStar(2)">★</button>
           <button type="button" data-star="1" onclick="setStar(1)">★</button>
         </div>
-        <span class="form-help" id="starLabel">点击星星评分</span>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="form-group">
-          <label class="form-label">清洁度</label>
-          <div class="star-input" style="font-size:0.875rem">
-            <button type="button" data-star="5" onclick="setSubStar('clean',5,this)">★</button>
-            <button type="button" data-star="4" onclick="setSubStar('clean',4,this)">★</button>
-            <button type="button" data-star="3" onclick="setSubStar('clean',3,this)">★</button>
-            <button type="button" data-star="2" onclick="setSubStar('clean',2,this)">★</button>
-            <button type="button" data-star="1" onclick="setSubStar('clean',1,this)">★</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">位置</label>
-          <div class="star-input" style="font-size:0.875rem">
-            <button type="button" data-star="5" onclick="setSubStar('loc',5,this)">★</button>
-            <button type="button" data-star="4" onclick="setSubStar('loc',4,this)">★</button>
-            <button type="button" data-star="3" onclick="setSubStar('loc',3,this)">★</button>
-            <button type="button" data-star="2" onclick="setSubStar('loc',2,this)">★</button>
-            <button type="button" data-star="1" onclick="setSubStar('loc',1,this)">★</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">服务</label>
-          <div class="star-input" style="font-size:0.875rem">
-            <button type="button" data-star="5" onclick="setSubStar('service',5,this)">★</button>
-            <button type="button" data-star="4" onclick="setSubStar('service',4,this)">★</button>
-            <button type="button" data-star="3" onclick="setSubStar('service',3,this)">★</button>
-            <button type="button" data-star="2" onclick="setSubStar('service',2,this)">★</button>
-            <button type="button" data-star="1" onclick="setSubStar('service',1,this)">★</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">性价比</label>
-          <div class="star-input" style="font-size:0.875rem">
-            <button type="button" data-star="5" onclick="setSubStar('value',5,this)">★</button>
-            <button type="button" data-star="4" onclick="setSubStar('value',4,this)">★</button>
-            <button type="button" data-star="3" onclick="setSubStar('value',3,this)">★</button>
-            <button type="button" data-star="2" onclick="setSubStar('value',2,this)">★</button>
-            <button type="button" data-star="1" onclick="setSubStar('value',1,this)">★</button>
-          </div>
-        </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">评价标题</label>
-        <input type="text" class="input" placeholder="用一句话总结你的体验" id="reviewTitle">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">详细评价 <span style="color:var(--danger)">*</span></label>
-        <textarea class="input" rows="6" placeholder="分享你的住宿体验…房间怎么样？房东怎么样？有什么亮点或不足？" id="reviewBody"></textarea>
-        <span class="form-help">至少 20 个字，帮助其他旅行者做出更好的选择</span>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">上传照片（选填）</label>
-        <div style="border:2px dashed var(--border);border-radius:var(--radius-lg);padding:var(--space-6);text-align:center;cursor:pointer" onclick="alert('选择照片')">
-          <p style="font-size:0.875rem;color:var(--fg-secondary)">点击上传照片</p>
-        </div>
+        <label class="form-label">评价内容 <span style="color:var(--danger)">*</span></label>
+        <textarea class="input" id="reviewContent" rows="6" placeholder="分享你的住宿体验..."></textarea>
       </div>
 
       <div class="flex gap-3 mt-6">
-        <button class="btn btn-outline flex-1" onclick="window.location.href='list.html'">取消</button>
-        <button class="btn btn-primary flex-1" onclick="submitReview()">提交评价</button>
-      </div>
-
-      <div id="reviewSuccess" class="alert alert-success mt-4" style="display:none">
-        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <div><div style="font-weight:500">评价提交成功！</div><div style="font-size:0.875rem">感谢你的分享</div></div>
+        <button class="btn btn-outline flex-1" onclick="history.back()">取消</button>
+        <button class="btn btn-primary flex-1" id="reviewSubmitBtn" onclick="submitReview()">提交评价</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-let selectedStar = 0;
-const starLabels = ['','很差','较差','一般','满意','非常满意'];
-
+var reviewState = { rating: 0 }
 
 function setStar(n) {
-  selectedStar = n;
-  const btns = document.querySelectorAll('#starInput button');
-  btns.forEach(b => {
-    b.classList.toggle('selected', parseInt(b.dataset.star) <= n);
-  });
-  document.getElementById('starLabel').textContent = starLabels[n] + ` (${n}/5)`;
-}
-
-function setSubStar(category, n, btn) {
-  const parent = btn.parentElement;
-  parent.querySelectorAll('button').forEach(b => {
-    b.classList.toggle('selected', parseInt(b.dataset.star) <= n);
-  });
+  reviewState.rating = n
+  document.querySelectorAll('#starInput button').forEach(function (b) {
+    b.classList.toggle('selected', parseInt(b.dataset.star) <= n)
+  })
 }
 
 function submitReview() {
-  if (!selectedStar) {
-    alert('请选择总体评分');
-    return;
-  }
-  if (!document.getElementById('reviewBody').value.trim()) {
-    alert('请填写评价内容');
-    return;
-  }
-  document.getElementById('reviewSuccess').style.display = 'flex';
-  setTimeout(() => { window.location.href = 'list.html'; }, 2000);
+  if (!requireAuth()) return
+  var errEl = document.getElementById('reviewError')
+  errEl.style.display = 'none'
+  if (!reviewState.rating) { errEl.textContent = '请选择评分'; errEl.style.display = 'block'; return }
+  var content = document.getElementById('reviewContent').value.trim()
+  if (!content) { errEl.textContent = '请填写评价内容'; errEl.style.display = 'block'; return }
+  var listingId = new URLSearchParams(location.search).get('listing_id')
+  var bookingId = new URLSearchParams(location.search).get('booking_id')
+  if (!listingId || !bookingId) { errEl.textContent = '缺少房源或订单信息'; errEl.style.display = 'block'; return }
+  var btn = document.getElementById('reviewSubmitBtn')
+  btn.disabled = true; btn.textContent = '提交中...'
+  var params = new URLSearchParams({ listing_id: listingId, booking_id: bookingId, rating: reviewState.rating })
+  if (content) params.set('content', content)
+  apiClient.post('/reviews/?' + params.toString(), {}).then(function () {
+    btn.disabled = false; btn.textContent = '提交评价'
+    document.getElementById('reviewForm').style.display = 'none'; document.getElementById('reviewSuccess').style.display = 'block'
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = '提交评价'
+    errEl.textContent = e.message; errEl.style.display = 'block'
+  })
 }
 
-(function() {
+document.addEventListener('DOMContentLoaded', function () {
+  if (!new URLSearchParams(location.search).get('listing_id')) {
+    document.getElementById('reviewError').textContent = '请从订单页面进入评价'
+    document.getElementById('reviewError').style.display = 'block'
+  }
+})
 </script>
 </body>
 </html>

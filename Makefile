@@ -1,7 +1,7 @@
-.PHONY: dev test lint format dc-up dc-down dc-build clean precommit
+.PHONY: dev test lint format clean precommit seed
 
 dev: ## 本地启动后端
-	uv run uvicorn app.main:app --reload --port 8000
+	PYTHONPATH=backend uvicorn app.main:app --reload --port 8001
 
 test: ## 运行测试
 	pytest backend/ -q
@@ -19,20 +19,8 @@ precommit: ## 提交前质量闭环
 	pytest backend/ -q
 	@echo "✅ 全部通过"
 
-dc-up: ## Docker Compose 启动全部
-	docker compose -f docker/docker-compose.yml up -d --build
-
-dc-down: ## Docker Compose 停止全部
-	docker compose -f docker/docker-compose.yml down
-
-dc-build: ## Docker Compose 构建
-	docker compose -f docker/docker-compose.yml build
-
-dc-logs: ## Docker Compose 日志
-	docker compose -f docker/docker-compose.yml logs -f
-
-dc-ps: ## Docker Compose 状态
-	docker compose -f docker/docker-compose.yml ps
+seed: ## 生成测试数据
+	PYTHONPATH=backend python backend/scripts/seed.py
 
 clean: ## 清理
 	rm -rf backend/**/__pycache__ backend/.pytest_cache .pytest_cache

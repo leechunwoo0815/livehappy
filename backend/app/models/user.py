@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text
+from sqlalchemy import Boolean, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin
@@ -19,3 +19,7 @@ class User(Base, TimestampMixin):
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     score: Mapped[int] = mapped_column(default=100)
     last_login: Mapped[datetime | None] = mapped_column(nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    nickname: Mapped[str | None] = mapped_column(String(50), nullable=True)

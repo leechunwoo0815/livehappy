@@ -5,126 +5,77 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>我的订单 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.booking-card-item{display:flex;gap:var(--space-4);padding:var(--space-5);border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);transition:all var(--transition-base)}
-.booking-card-item:hover{box-shadow:var(--shadow-md)}
-.booking-card-item img{width:160px;height:120px;object-fit:cover;border-radius:var(--radius-md);flex-shrink:0}
-@media(max-width:640px){.booking-card-item{flex-direction:column}.booking-card-item img{width:100%;height:160px}}
+.page{padding:var(--space-8) 0}
+.booking-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5);background:var(--surface);margin-bottom:var(--space-4);display:flex;gap:var(--space-4)}
+.booking-card:hover{box-shadow:var(--shadow-sm)}
+.booking-card img{width:120px;height:90px;object-fit:cover;border-radius:var(--radius-md)}
+.booking-card-body{flex:1}
+.booking-card-title{font-weight:600;margin-bottom:var(--space-1)}
+.booking-card-title a{color:var(--fg);text-decoration:none}
+.booking-card-meta{font-size:0.8125rem;color:var(--fg-secondary)}
+.badge{padding:2px 10px;border-radius:var(--radius-full);font-size:0.75rem;font-weight:500}
+.badge-pending{background:var(--warning-subtle);color:var(--warning)}
+.badge-paid{background:var(--info-subtle);color:var(--info)}
+.badge-confirmed{background:var(--success-subtle);color:var(--success)}
+.badge-cancelled{background:var(--danger-subtle);color:var(--danger)}
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
     <div class="nav-links">
       <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
-      <a href="list.html" class="nav-link active">我的订单</a>
+      <a href="/screens/bookings/list.html" class="nav-link active" data-auth-required>我的订单</a>
     </div>
     <div class="nav-actions">
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-      </button>
-      <a href="/screens/auth/login.html" class="btn btn-outline btn-sm">登录</a>
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
+      <div data-nav-auth></div>
     </div>
   </div>
 </nav>
 
-<div class="page">
-  <div class="container" style="max-width:800px">
-    <h1 class="mb-6">我的订单</h1>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab(this,'all')">全部</button>
-      <button class="tab" onclick="switchTab(this,'upcoming')">待入住</button>
-      <button class="tab" onclick="switchTab(this,'active')">进行中</button>
-      <button class="tab" onclick="switchTab(this,'completed')">已完成</button>
-      <button class="tab" onclick="switchTab(this,'cancelled')">已取消</button>
-    </div>
-
-    <div class="flex flex-col gap-4">
-      <a href="detail.html" style="text-decoration:none;color:inherit">
-        <div class="booking-card-item fade-in">
-          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80" alt="" loading="lazy">
-          <div class="flex-1 flex flex-col" style="justify-content:space-between">
-            <div>
-              <div class="flex items-start justify-between mb-1">
-                <h3 style="font-size:1.0625rem">西湖畔·湖景精品酒店</h3>
-                <span class="badge badge-success">已确认</span>
-              </div>
-              <p style="font-size:0.875rem;color:var(--fg-secondary)">杭州 · 西湖区</p>
-              <p style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">📅 2026.06.01 — 06.03 · 3位住客</p>
-            </div>
-            <div class="flex items-center justify-between mt-3">
-              <span style="font-weight:600;font-size:1.125rem;font-family:var(--font-display);color:var(--accent)">¥1,344</span>
-              <div class="flex gap-2">
-                <button class="btn btn-ghost btn-sm" onclick="event.preventDefault();alert('联系房东')">联系房东</button>
-                <a href="detail.html" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">查看详情</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <a href="detail.html" style="text-decoration:none;color:inherit">
-        <div class="booking-card-item fade-in stagger-1">
-          <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&q=80" alt="" loading="lazy">
-          <div class="flex-1 flex flex-col" style="justify-content:space-between">
-            <div>
-              <div class="flex items-start justify-between mb-1">
-                <h3 style="font-size:1.0625rem">灵隐·禅意山居民宿</h3>
-                <span class="badge badge-info">待付款</span>
-              </div>
-              <p style="font-size:0.875rem;color:var(--fg-secondary)">杭州 · 西湖区</p>
-              <p style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">📅 2026.06.15 — 06.17 · 2位住客</p>
-            </div>
-            <div class="flex items-center justify-between mt-3">
-              <span style="font-weight:600;font-size:1.125rem;font-family:var(--font-display);color:var(--accent)">¥840</span>
-              <div class="flex gap-2">
-                <button class="btn btn-danger btn-sm" onclick="event.preventDefault();alert('取消订单？')">取消</button>
-                <a href="detail.html" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">去支付</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      <a href="detail.html" style="text-decoration:none;color:inherit">
-        <div class="booking-card-item fade-in stagger-2">
-          <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&q=80" alt="" loading="lazy">
-          <div class="flex-1 flex flex-col" style="justify-content:space-between">
-            <div>
-              <div class="flex items-start justify-between mb-1">
-                <h3 style="font-size:1.0625rem">钱塘江畔·天际奢华公寓</h3>
-                <span class="badge badge-neutral">已完成</span>
-              </div>
-              <p style="font-size:0.875rem;color:var(--fg-secondary)">杭州 · 上城区</p>
-              <p style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">📅 2026.03.10 — 03.14 · 4位住客</p>
-            </div>
-            <div class="flex items-center justify-between mt-3">
-              <span style="font-weight:600;font-size:1.125rem;font-family:var(--font-display);color:var(--fg-secondary)">¥3,596</span>
-              <div class="flex gap-2">
-                <button class="btn btn-outline btn-sm" onclick="event.preventDefault();alert('写评价')">写评价</button>
-                <button class="btn btn-ghost btn-sm" onclick="event.preventDefault();alert('再次预订')">再次预订</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
+<div class="container page" id="bookingsApp">
+  <h2 class="mb-6">我的订单</h2>
+  <div id="bookingsLoading" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
+  <div id="bookingsEmpty" class="text-center py-8" style="color:var(--fg-secondary);display:none">
+    <p style="font-size:2rem;margin-bottom:var(--space-2)">📋</p>
+    <p>还没有订单</p>
+    <a href="/screens/listings/search.html" class="btn btn-primary btn-sm" style="margin-top:var(--space-3)">去预订</a>
   </div>
+  <div id="bookingsList"></div>
 </div>
 
 <script>
-function switchTab(el, tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-}
-(function() {
+document.addEventListener('DOMContentLoaded', function () {
+  if (!requireAuth()) return
+  apiClient.get('/bookings/').then(function (bookings) {
+    document.getElementById('bookingsLoading').style.display = 'none'
+    if (!bookings || bookings.length === 0) {
+      document.getElementById('bookingsEmpty').style.display = 'block'
+      return
+    }
+    var html = bookings.map(function (b) {
+      return '<div class="booking-card">' +
+        '<img src="' + NO_IMAGE_URL + '" alt="" style="width:120px;height:90px;object-fit:cover;border-radius:var(--radius-md);background:var(--surface-hover)">' +
+        '<div class="booking-card-body">' +
+        '<div class="booking-card-title"><a href="/screens/bookings/detail.html?id=' + b.id + '">订单 #' + escapeHtml(b.id.substring(0, 8)) + '</a></div>' +
+        '<div class="booking-card-meta">' +
+        '<span>' + escapeHtml(b.check_in) + ' → ' + escapeHtml(b.check_out) + '</span>' +
+        '<span style="margin-left:var(--space-3)">¥' + (b.total_price || '') + '</span>' +
+        '</div>' +
+        '<div style="margin-top:var(--space-2)"><span class="badge badge-' + b.status + '">' + statusLabel(b.status) + '</span></div>' +
+        '</div></div>'
+    }).join('')
+    document.getElementById('bookingsList').innerHTML = html
+  }).catch(function (e) {
+    document.getElementById('bookingsLoading').style.display = 'none'
+    document.getElementById('bookingsList').innerHTML = '<div class="text-center py-8" style="color:var(--danger)">' + escapeHtml(translateError(e.message)) + '</div>'
+  })
+})
 </script>
 </body>
 </html>

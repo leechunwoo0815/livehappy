@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>用户管理 — 开心住 LiveHappy 管理后台</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - var(--nav-height))}
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - var(--nav-height));padding-top:var(--nav-height)}
 @media(max-width:1023px){.admin-layout{grid-template-columns:1fr}}
 .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:var(--space-4)}
 @media(max-width:1023px){.sidebar{display:none}}
@@ -22,7 +21,6 @@
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
     <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
@@ -36,7 +34,6 @@
     </div>
   </div>
 </nav>
-
 <div class="admin-layout">
   <aside class="sidebar">
     <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
@@ -46,105 +43,100 @@
     <div class="sidebar-item" onclick="window.location.href='listings.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       房源管理
-      <span class="badge badge-warning" style="margin-left:auto;font-size:0.6875rem;padding:1px 6px">12</span>
     </div>
     <div class="sidebar-item active">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
       用户管理
     </div>
   </aside>
-
   <main class="admin-main">
     <div class="flex items-center justify-between mb-6">
       <h1>用户管理</h1>
-      <div class="flex gap-2">
-        <input type="text" class="input" placeholder="搜索用户名/邮箱/手机..." style="width:280px;font-size:0.875rem;padding:8px 12px">
-        <select class="input" style="width:auto;font-size:0.875rem;padding:6px 30px 6px 12px">
-          <option>全部用户</option>
-          <option>普通用户</option>
-          <option>房东</option>
-          <option>管理员</option>
-        </select>
-      </div>
+      <select class="input" style="width:auto;font-size:0.875rem;padding:6px 30px 6px 12px" id="roleFilter" onchange="switchRole()">
+        <option value="">全部用户</option>
+        <option value="user">普通用户</option>
+        <option value="host">房东</option>
+        <option value="admin">管理员</option>
+      </select>
     </div>
-
+    <div id="errorMsg" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-4)"></div>
     <div class="card p-0">
       <div class="table-wrap" style="border:none">
         <table>
-          <thead>
-            <tr><th style="width:30px"><input type="checkbox" style="accent-color:var(--accent)"></th><th>用户</th><th>角色</th><th>注册时间</th><th>订单数</th><th>房源数</th><th>状态</th><th>操作</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">李</div><div><div style="font-weight:500;font-size:0.875rem">李明</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">li.ming@email.com</div></div></div></td>
-              <td><span class="badge badge-accent">普通用户</span></td>
-              <td style="font-size:0.875rem">2025-08-15</td>
-              <td>12</td>
-              <td>0</td>
-              <td><span class="badge badge-success">正常</span></td>
-              <td><button class="btn btn-ghost btn-sm">详情</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-secondary));color:var(--white)">张</div><div><div style="font-weight:500;font-size:0.875rem">张先生</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">zhang@email.com</div></div></div></td>
-              <td><span class="badge badge-secondary">房东</span></td>
-              <td style="font-size:0.875rem">2019-03-20</td>
-              <td>86</td>
-              <td>3</td>
-              <td><span class="badge badge-success">正常</span></td>
-              <td><button class="btn btn-ghost btn-sm">详情</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary)">王</div><div><div style="font-weight:500;font-size:0.875rem">王晓</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">wangxiao@email.com</div></div></div></td>
-              <td><span class="badge badge-accent">普通用户</span></td>
-              <td style="font-size:0.875rem">2025-11-02</td>
-              <td>5</td>
-              <td>0</td>
-              <td><span class="badge badge-success">正常</span></td>
-              <td><button class="btn btn-ghost btn-sm">详情</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--success-subtle);color:var(--success)">陈</div><div><div style="font-weight:500;font-size:0.875rem">陈先生</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">chen@email.com</div></div></div></td>
-              <td><span class="badge badge-secondary">房东</span></td>
-              <td style="font-size:0.875rem">2020-06-10</td>
-              <td>45</td>
-              <td>2</td>
-              <td><span class="badge badge-success">正常</span></td>
-              <td><button class="btn btn-ghost btn-sm">详情</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><div class="avatar avatar-sm" style="background:var(--danger-subtle);color:var(--danger)">赵</div><div><div style="font-weight:500;font-size:0.875rem">赵六</div><div style="font-size:0.75rem;color:var(--fg-tertiary)">zhao@email.com</div></div></div></td>
-              <td><span class="badge badge-accent">普通用户</span></td>
-              <td style="font-size:0.875rem">2026-01-05</td>
-              <td>1</td>
-              <td>0</td>
-              <td><span class="badge badge-danger">已封禁</span></td>
-              <td><button class="btn btn-ghost btn-sm">详情</button></td>
-            </tr>
-          </tbody>
+            <thead><tr><th>用户</th><th>邮箱</th><th>角色</th><th>积分</th><th>注册时间</th><th>操作</th></tr></thead>
+          <tbody id="userTableBody"></tbody>
         </table>
       </div>
     </div>
-
     <div class="flex items-center justify-between mt-4">
-      <span class="text-small">显示 1-5 / 共 12,480 位用户</span>
+      <span class="text-small" id="paginationInfo"></span>
       <div class="flex gap-2">
-        <button class="btn btn-outline btn-sm">上一页</button>
-        <button class="btn btn-primary btn-sm">1</button>
-        <button class="btn btn-outline btn-sm">2</button>
-        <button class="btn btn-outline btn-sm">3</button>
-        <button class="btn btn-outline btn-sm">下一页</button>
+        <button class="btn btn-outline btn-sm" id="prevBtn" onclick="prevPage()" disabled>上一页</button>
+        <button class="btn btn-primary btn-sm" id="pageBtn">1</button>
+        <button class="btn btn-outline btn-sm" id="nextBtn" onclick="nextPage()" disabled>下一页</button>
       </div>
     </div>
   </main>
 </div>
-
 <script>
-(function() {
+let state = { page: 1, size: 10, total: 0, role: '' };
+
+async function loadUsers() {
+  const q = new URLSearchParams({ page: state.page, size: state.size });
+  if (state.role) q.set('role', state.role);
+  let d;
+  try {
+    d = await apiClient.get('/admin/users?' + q.toString());
+  } catch (e) {
+    showError(translateError(e.message) || '加载失败，请刷新重试')
+    return
+  }
+  state.total = d.total;
+  const tbody = document.getElementById('userTableBody');
+  tbody.innerHTML = '';
+  for (const u of d.items || []) {
+    const self = u.id === (JSON.parse(localStorage.getItem('user') || 'null') || {}).id;
+    const roleOpts = ['user','host','admin'].map(r => '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + ({user:'普通用户',host:'房东',admin:'管理员'}[r]) + '</option>').join('');
+    tbody.innerHTML += '<tr>'
+      + '<td><div style="font-weight:500;font-size:0.875rem">' + escapeHtml(u.username) + '</div></td>'
+      + '<td style="font-size:0.875rem;color:var(--fg-tertiary)">' + escapeHtml(u.email) + '</td>'
+      + '<td><select class="input" style="width:auto;font-size:0.8125rem;padding:2px 24px 2px 8px" onchange="changeRole(\'' + u.id + '\',this.value)" ' + (self ? 'disabled' : '') + '>' + roleOpts + '</select></td>'
+      + '<td>' + (u.score ?? '') + '</td>'
+      + '<td style="font-size:0.875rem">' + (u.created_at || '').slice(0, 10) + '</td>'
+      + '<td>' + (self ? '' : '<button class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:4px 10px;color:var(--danger)" onclick="deleteUser(\'' + u.id + '\')">删除</button>') + '</td>'
+      + '</tr>';
+  }
+  if (!d.items || d.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);color:var(--fg-tertiary)">暂无数据</td></tr>';
+  }
+  document.getElementById('paginationInfo').textContent = '显示 ' + (d.items || []).length + ' / 共 ' + state.total + ' 位用户';
+  document.getElementById('pageBtn').textContent = state.page;
+  document.getElementById('prevBtn').disabled = state.page <= 1;
+  document.getElementById('nextBtn').disabled = state.page * state.size >= state.total;
+}
+
+function switchRole() { state.role = document.getElementById('roleFilter').value; state.page = 1; loadUsers(); }
+function prevPage() { if (state.page > 1) { state.page--; loadUsers(); } }
+function nextPage() { if (state.page * state.size < state.total) { state.page++; loadUsers(); } }
+async function changeRole(userId, role) {
+  try {
+    await apiClient.put('/admin/users/' + userId + '/role', { role });
+  } catch (e) {
+    showError('修改角色失败');
+    loadUsers();
+  }
+}
+async function deleteUser(userId) {
+  if (!confirm('确定要删除此用户吗？')) return;
+  try {
+    await apiClient.delete('/admin/users/' + userId);
+    loadUsers();
+  } catch (e) {
+    showError('删除失败');
+  }
+}
+function showError(msg) { const e = document.getElementById('errorMsg'); e.textContent = msg; e.style.display = ''; }
+document.addEventListener('DOMContentLoaded', loadUsers);
 </script>
 </body>
 </html>

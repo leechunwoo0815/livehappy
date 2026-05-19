@@ -419,3 +419,8 @@ tr:hover td{background:var(--surface-hover)}
 .p-0{padding:0}.p-4{padding:var(--space-4)}.p-6{padding:var(--space-6)}.p-8{padding:var(--space-8)}
 .w-full{width:100%}
 .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 未登录时隐藏需要登录的导航链接（默认隐藏防闪现） */
+[data-auth-required]{display:none!important}
+[data-logged-in="true"] [data-auth-required]{display:inline-flex!important}
+[data-logged-in="true"] .mobile-nav [data-auth-required]{display:block!important}
