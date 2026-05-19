@@ -10,6 +10,7 @@ from app.models.audit_log import AuditLog
 from app.models.booking import Booking
 from app.models.listing import Listing
 from app.models.user import User
+from app.redis import get_redis
 
 
 async def require_admin(db: AsyncSession, user_id: str) -> User:
@@ -188,7 +189,12 @@ async def admin_ban_user(db: AsyncSession, target_user_id: str, admin_id: str) -
         raise NotFoundException()
     if user.role == "admin":
         raise BadRequestException("不能封禁管理员")
-    user.is_active = False
+    user.is_banned = True
+    try:
+        redis = get_redis()
+        await redis.sadd("banned_users", target_user_id)
+    except RuntimeError:
+        pass
     await _log_audit(
         db, admin_id, "ban_user", "user", target_user_id, f"用户「{user.username}」已被封禁"
     )
@@ -199,7 +205,12 @@ async def admin_unban_user(db: AsyncSession, target_user_id: str, admin_id: str)
     user = await db.get(User, target_user_id)
     if not user:
         raise NotFoundException()
-    user.is_active = True
+    user.is_banned = False
+    try:
+        redis = get_redis()
+        await redis.srem("banned_users", target_user_id)
+    except RuntimeError:
+        pass
     await _log_audit(
         db, admin_id, "unban_user", "user", target_user_id, f"用户「{user.username}」已解封"
     )
