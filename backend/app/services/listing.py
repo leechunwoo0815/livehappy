@@ -1,9 +1,10 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.models.listing import Listing
+from app.models.review import Review
 from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
 
@@ -26,6 +27,52 @@ async def get_listing(db: AsyncSession, listing_id: str) -> Listing:
     if not listing:
         raise NotFoundException()
     return listing
+
+
+async def get_listing_detail(db: AsyncSession, listing_id: str) -> dict:
+    listing = await get_listing(db, listing_id)
+
+    reviews_result = await db.execute(
+        select(Review).where(Review.listing_id == listing_id).order_by(Review.created_at.desc())
+    )
+    reviews = reviews_result.scalars().all()
+
+    avg_result = await db.execute(
+        select(func.avg(Review.rating)).where(Review.listing_id == listing_id)
+    )
+    avg_rating = avg_result.scalar()
+
+    return {
+        "id": listing.id,
+        "host_id": listing.host_id,
+        "title": listing.title,
+        "description": listing.description,
+        "city": listing.city,
+        "address": listing.address,
+        "price_per_night": listing.price_per_night,
+        "max_guests": listing.max_guests,
+        "status": listing.status,
+        "cover_image": listing.cover_image,
+        "is_active": listing.is_active,
+        "photos": [
+            {"id": p.id, "url": p.url, "is_primary": p.is_primary, "sort_order": p.sort_order}
+            for p in listing.photos
+        ],
+        "reviews": [
+            {
+                "id": r.id,
+                "user_id": r.user_id,
+                "rating": r.rating,
+                "content": r.content,
+                "reply": r.reply,
+                "created_at": str(r.created_at),
+            }
+            for r in reviews
+        ],
+        "avg_rating": round(float(avg_rating), 1) if avg_rating else None,
+        "review_count": len(reviews),
+        "created_at": str(listing.created_at),
+    }
 
 
 async def search_listings(

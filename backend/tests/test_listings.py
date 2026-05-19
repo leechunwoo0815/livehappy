@@ -62,6 +62,11 @@ async def test_get_listing_detail(client: AsyncClient):
     resp = await client.get(f"/api/listings/{listing_id}")
     assert resp.status_code == 200
     assert resp.json()["data"]["title"] == "山间小屋"
+    # New detail should include reviews and avg_rating
+    data = resp.json()["data"]
+    assert "reviews" in data
+    assert "avg_rating" in data
+    assert "review_count" in data
 
 
 @pytest.mark.asyncio

@@ -17,6 +17,7 @@ from app.services.listing import (
     create_listing,
     delete_listing,
     get_listing,
+    get_listing_detail,
     reject_listing,
     search_listings,
     update_listing,
@@ -46,8 +47,8 @@ async def search(
 
 @router.get("/{listing_id}", response_model=BaseResponse)
 async def detail(listing_id: str, db: AsyncSession = Depends(get_db)):
-    listing = await get_listing(db, listing_id)
-    return BaseResponse(success=True, data=ListingResponse.model_validate(listing))
+    data = await get_listing_detail(db, listing_id)
+    return BaseResponse(success=True, data=data)
 
 
 @router.post("/", response_model=BaseResponse, status_code=201)
