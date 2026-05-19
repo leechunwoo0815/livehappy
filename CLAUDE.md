@@ -32,7 +32,7 @@
 - 预订状态流转：`pending` → `confirmed`（支付后）→ `completed` / `cancelled`
 - 取消已确认的预订会自动触发退款，支付金额归零
 - 平台抽佣 10%，`host_payout = total_price - platform_fee`
-- 房源搜索支持按城市/价格区间/入住人数筛选，默认分页 20 条/页
+- 房源搜索支持按城市/价格区间/入住人数筛选，支持排序（price_asc/price_desc/newest），默认分页 20 条/页
 - 每个用户对同一笔记只能点赞一次（UniqueConstraint）
 - 每个用户对同一房源只能发布一条评价（booking_id 唯一约束）
 - 用户角色：`user`（普通用户）/ `host`（房东）/ `admin`（管理员）
@@ -609,7 +609,7 @@ avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
 | `test_ai.py` | AI | — | AI 聊天 |
 | `test_notifications.py` | 通知 | 6 | 列表/已读/全部已读/未认证 |
 | `test_upload_health.py` | 上传/健康 | 4 | 文件上传/格式校验/健康检查 |
-| **总计** | | **79** | |
+| **总计** | | **103** | |
 
 ### 测试基础设施
 
@@ -779,6 +779,10 @@ alembic current                              # 当前版本
 | GET | `/api/notifications/` | 是 | 通知列表（含未读数） |
 | POST | `/api/notifications/{id}/read` | 是 | 标记通知已读 |
 | POST | `/api/notifications/read-all` | 是 | 全部标记已读 |
+| POST | `/api/listings/{id}/favorite` | 是 | 收藏/取消收藏房源 |
+| GET | `/api/listings/{id}/favorite/status` | 是 | 查询是否已收藏 |
+| GET | `/api/users/favorites` | 是 | 我的收藏列表 |
+| GET | `/api/messages/unread-count` | 是 | 消息未读总数 |
 | POST | `/api/upload` | 是 | 文件上传（图片） |
 | GET | `/api/admin/stats` | 是(管理员) | 平台统计数据 |
 | POST | `/api/ai/chat` | 是 | AI 聊天 |
