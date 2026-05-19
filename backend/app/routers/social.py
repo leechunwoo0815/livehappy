@@ -1,148 +1,103 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.middleware.auth import get_current_user
-from app.models.social import Note, NoteComment, NoteLike, UserFollow
+from app.schemas.common import BaseResponse
+from app.schemas.social import NoteCreate
+from app.services.social import (
+    add_comment,
+    create_note,
+    follow_user,
+    get_note,
+    like_note,
+    list_comments,
+    list_notes,
+    unfollow_user,
+    unlike_note,
+)
 
 router = APIRouter()
 
 
-@router.post("/notes")
-async def create_note(
-    title: str,
-    content: str,
+@router.post("/notes", response_model=BaseResponse)
+async def create(
+    data: NoteCreate = Body(...),
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    note = Note(user_id=user_id, title=title, content=content)
-    db.add(note)
-    await db.commit()
-    await db.refresh(note)
-    return {"id": note.id, "title": note.title}
+    note = await create_note(db, user_id, data.title, data.content)
+    return BaseResponse(success=True, data={"id": note.id, "title": note.title})
 
 
-@router.get("/notes")
-async def list_notes(
+@router.get("/notes", response_model=BaseResponse)
+async def list(
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Note).order_by(Note.created_at.desc()).offset((page - 1) * size).limit(size)
-    )
-    notes = result.scalars().all()
-    count = await db.execute(select(func.count(Note.id)))
-    return {
-        "items": [
-            {
-                "id": n.id,
-                "user_id": n.user_id,
-                "title": n.title,
-                "content": n.content,
-                "likes_count": n.likes_count,
-                "comments_count": n.comments_count,
-                "created_at": str(n.created_at),
-            }
-            for n in notes
-        ],
-        "total": count.scalar(),
-    }
+    result = await list_notes(db, page, size)
+    return BaseResponse(success=True, data=result)
 
 
-@router.post("/notes/{note_id}/like")
-async def like_note(
+@router.get("/notes/{note_id}", response_model=BaseResponse)
+async def detail(note_id: str, db: AsyncSession = Depends(get_db)):
+    note = await get_note(db, note_id)
+    return BaseResponse(success=True, data=note)
+
+
+@router.get("/notes/{note_id}/comments", response_model=BaseResponse)
+async def list_note_comments(note_id: str, db: AsyncSession = Depends(get_db)):
+    comments = await list_comments(db, note_id)
+    return BaseResponse(success=True, data=comments)
+
+
+@router.post("/notes/{note_id}/like", response_model=BaseResponse)
+async def like(
     note_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(NoteLike).where(NoteLike.note_id == note_id, NoteLike.user_id == user_id)
-    )
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="已点赞")
-    db.add(NoteLike(note_id=note_id, user_id=user_id))
-    await db.execute(
-        Note.__table__.update().where(Note.id == note_id).values(likes_count=Note.likes_count + 1)
-    )
-    await db.commit()
-    return {"status": "liked"}
+    result = await like_note(db, note_id, user_id)
+    return BaseResponse(success=True, data=result)
 
 
-@router.post("/notes/{note_id}/unlike")
-async def unlike_note(
+@router.post("/notes/{note_id}/unlike", response_model=BaseResponse)
+async def unlike(
     note_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(NoteLike).where(NoteLike.note_id == note_id, NoteLike.user_id == user_id)
-    )
-    like = result.scalar_one_or_none()
-    if not like:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    await db.delete(like)
-    await db.execute(
-        Note.__table__.update().where(Note.id == note_id).values(likes_count=Note.likes_count - 1)
-    )
-    await db.commit()
-    return {"status": "unliked"}
+    result = await unlike_note(db, note_id, user_id)
+    return BaseResponse(success=True, data=result)
 
 
-@router.post("/notes/{note_id}/comments")
-async def add_comment(
+@router.post("/notes/{note_id}/comments", response_model=BaseResponse)
+async def comment(
     note_id: str,
     content: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    comment = NoteComment(note_id=note_id, user_id=user_id, content=content)
-    db.add(comment)
-    await db.execute(
-        Note.__table__.update()
-        .where(Note.id == note_id)
-        .values(comments_count=Note.comments_count + 1)
-    )
-    await db.commit()
-    await db.refresh(comment)
-    return {"id": comment.id, "content": comment.content}
+    result = await add_comment(db, note_id, user_id, content)
+    return BaseResponse(success=True, data=result)
 
 
-@router.post("/follow/{target_id}")
-async def follow_user(
+@router.post("/follow/{target_id}", response_model=BaseResponse)
+async def follow(
     target_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if user_id == target_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    result = await db.execute(
-        select(UserFollow).where(
-            UserFollow.follower_id == user_id, UserFollow.following_id == target_id
-        )
-    )
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT)
-    db.add(UserFollow(follower_id=user_id, following_id=target_id))
-    await db.commit()
-    return {"status": "followed"}
+    result = await follow_user(db, user_id, target_id)
+    return BaseResponse(success=True, data=result)
 
 
-@router.post("/unfollow/{target_id}")
-async def unfollow_user(
+@router.post("/unfollow/{target_id}", response_model=BaseResponse)
+async def unfollow(
     target_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(UserFollow).where(
-            UserFollow.follower_id == user_id, UserFollow.following_id == target_id
-        )
-    )
-    follow = result.scalar_one_or_none()
-    if not follow:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    await db.delete(follow)
-    await db.commit()
-    return {"status": "unfollowed"}
+    result = await unfollow_user(db, user_id, target_id)
+    return BaseResponse(success=True, data=result)

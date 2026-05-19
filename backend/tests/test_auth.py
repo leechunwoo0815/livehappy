@@ -10,8 +10,8 @@ async def test_register(client: AsyncClient):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
+    assert "access_token" in data["data"]
+    assert "refresh_token" in data["data"]
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_login(client: AsyncClient):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert "access_token" in data
+    assert "access_token" in data["data"]
 
 
 @pytest.mark.asyncio
@@ -61,7 +61,7 @@ async def test_refresh(client: AsyncClient):
         "/api/auth/register",
         json={"username": "refreshuser", "email": "refresh@test.com", "password": "Test1234!"},
     )
-    refresh_token = reg.json()["refresh_token"]
+    refresh_token = reg.json()["data"]["refresh_token"]
     resp = await client.post("/api/auth/refresh", json={"refresh_token": refresh_token})
     assert resp.status_code == 200
-    assert "access_token" in resp.json()
+    assert "access_token" in resp.json()["data"]

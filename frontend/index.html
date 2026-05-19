@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>开心住 LiveHappy — 酒店民宿预订平台</title>
 <link rel="stylesheet" href="css/system.css">
-<script src="js/htmx.min.js"></script>
-<script src="js/alpine.min.js" defer></script>
+
 <script src="js/app.js"></script>
 <style>
 .hero{position:relative;padding:var(--space-20) 0 var(--space-16);text-align:center;overflow:hidden}
@@ -49,7 +48,7 @@
 </style>
 </head>
 <body>
-<nav class="nav" x-data>
+<nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-brand">
       <span class="nav-brand-icon">K</span>
@@ -60,37 +59,25 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         搜索房源
       </a>
-      <a href="screens/bookings/list.html" class="nav-link">
+      <a href="screens/bookings/list.html" class="nav-link" data-auth-required>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         我的订单
       </a>
-      <a href="screens/messages/list.html" class="nav-link">
+      <a href="screens/messages/list.html" class="nav-link" data-auth-required>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
         消息
       </a>
-      <a href="screens/social/feed.html" class="nav-link">
+      <a href="screens/social/feed.html" class="nav-link" data-auth-required>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         旅记
       </a>
     </div>
     <div class="nav-actions">
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="\u5207\u6362\u4e3b\u9898">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
       </button>
-      <template x-if="!$store.auth.loggedIn">
-        <>
-          <a href="screens/auth/login.html" class="btn btn-outline btn-sm">登录</a>
-          <a href="screens/auth/register.html" class="btn btn-primary btn-sm">注册</a>
-        </>
-      </template>
-      <template x-if="$store.auth.loggedIn">
-        <div class="flex items-center gap-2">
-          <a href="screens/users/profile.html" class="btn btn-ghost btn-sm" x-text="$store.auth.username"></a>
-          <a href="screens/listings/create.html" class="btn btn-primary btn-sm">发布房源</a>
-          <button class="btn btn-outline btn-sm" @click="$store.auth.logout()">退出</button>
-        </div>
-      </template>
+      <div data-nav-auth></div>
     </div>
     <button class="nav-mobile-toggle" onclick="toggleMobileNav()" aria-label="菜单">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -99,22 +86,11 @@
 </nav>
 <div class="mobile-nav" id="mobileNav">
   <a href="screens/listings/search.html" onclick="toggleMobileNav()">搜索房源</a>
-  <a href="screens/bookings/list.html" onclick="toggleMobileNav()">我的订单</a>
-  <a href="screens/messages/list.html" onclick="toggleMobileNav()">消息</a>
-  <a href="screens/social/feed.html" onclick="toggleMobileNav()">旅记</a>
-  <a href="screens/ai/chat.html" onclick="toggleMobileNav()">AI 助手</a>
-  <template x-if="!$store.auth.loggedIn">
-    <div class="nav-actions" style="padding:var(--space-4)">
-      <a href="screens/auth/login.html" class="btn btn-outline w-full">登录</a>
-      <a href="screens/auth/register.html" class="btn btn-primary w-full" style="margin-top:var(--space-2)">注册</a>
-    </div>
-  </template>
-  <template x-if="$store.auth.loggedIn">
-    <div class="nav-actions" style="padding:var(--space-4)">
-      <a href="screens/users/profile.html" class="btn btn-outline w-full" x-text="$store.auth.username"></a>
-      <button class="btn btn-outline w-full" style="margin-top:var(--space-2)" @click="$store.auth.logout()">退出</button>
-    </div>
-  </template>
+  <a href="screens/bookings/list.html" onclick="toggleMobileNav()" data-auth-required>我的订单</a>
+  <a href="screens/messages/list.html" onclick="toggleMobileNav()" data-auth-required>消息</a>
+  <a href="screens/social/feed.html" onclick="toggleMobileNav()" data-auth-required>旅记</a>
+  <a href="screens/ai/chat.html" onclick="toggleMobileNav()" data-auth-required>AI 助手</a>
+  <div data-nav-auth-mobile></div>
 </div>
 
 <section class="hero">
@@ -137,7 +113,7 @@
     <div class="module-card fade-in stagger-1">
       <div class="module-card-icon">🔐</div>
       <h3>认证 / 用户</h3>
-      <p>注册登录、Token 刷新、个人资料管理</p>
+      <p>登录注册、Token 刷新、个人资料管理</p>
       <div class="module-card-links">
         <a href="screens/auth/login.html">登录</a>
         <a href="screens/auth/register.html">注册</a>

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>房源详情 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
 .detail-page{padding:var(--space-8) 0}
@@ -16,37 +16,26 @@
 .detail-info h1{font-size:1.75rem;margin-bottom:var(--space-2)}
 .detail-meta{display:flex;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-4);color:var(--fg-secondary);font-size:0.875rem}
 .detail-desc{line-height:1.7;margin-bottom:var(--space-6);color:var(--fg-secondary)}
-.detail-amenities{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-6)}
-.detail-amenity{padding:4px 12px;border-radius:var(--radius-full);background:var(--accent-subtle);color:var(--accent);font-size:0.8125rem}
 .booking-sidebar{border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-6);background:var(--surface);position:sticky;top:var(--space-4)}
 .booking-price{font-size:1.75rem;font-weight:700;color:var(--accent);margin-bottom:var(--space-4)}
 .booking-price span{font-size:0.875rem;font-weight:400;color:var(--fg-secondary)}
-.review-card{border-bottom:1px solid var(--border);padding:var(--space-4) 0}
-.review-card:last-child{border-bottom:0}
-.review-header{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)}
-.review-stars{color:var(--warning)}
 </style>
 </head>
 <body>
-<nav class="nav" x-data>
+<nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
     <div class="nav-links">
       <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
-      <a href="/screens/bookings/list.html" class="nav-link">我的订单</a>
-      <a href="/screens/messages/list.html" class="nav-link">消息</a>
+      <a href="/screens/bookings/list.html" class="nav-link" data-auth-required>我的订单</a>
+      <a href="/screens/messages/list.html" class="nav-link" data-auth-required>消息</a>
     </div>
     <div class="nav-actions">
-      <button class="theme-toggle" onclick="toggleTheme()">...</button>
-      <template x-if="!$store.auth.loggedIn">
-        <><a href="/screens/auth/login.html" class="btn btn-outline btn-sm">登录</a><a href="/screens/auth/register.html" class="btn btn-primary btn-sm">注册</a></>
-      </template>
-      <template x-if="$store.auth.loggedIn">
-        <div class="flex items-center gap-2">
-          <a href="/screens/users/profile.html" class="btn btn-ghost btn-sm" x-text="$store.auth.username"></a>
-          <button class="btn btn-outline btn-sm" @click="$store.auth.logout()">退出</button>
-        </div>
-      </template>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <div data-nav-auth></div>
     </div>
     <button class="nav-mobile-toggle" onclick="toggleMobileNav()" aria-label="菜单">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -55,85 +44,82 @@
 </nav>
 <div class="mobile-nav" id="mobileNav">
   <a href="/screens/listings/search.html" onclick="toggleMobileNav()">搜索房源</a>
-  <a href="/screens/bookings/list.html" onclick="toggleMobileNav()">我的订单</a>
-  <a href="/screens/messages/list.html" onclick="toggleMobileNav()">消息</a>
-  <a href="/screens/ai/chat.html" onclick="toggleMobileNav()">AI 助手</a>
+  <a href="/screens/bookings/list.html" onclick="toggleMobileNav()" data-auth-required>我的订单</a>
+  <a href="/screens/messages/list.html" onclick="toggleMobileNav()" data-auth-required>消息</a>
+  <a href="/screens/ai/chat.html" onclick="toggleMobileNav()" data-auth-required>AI 助手</a>
+  <div data-nav-auth-mobile></div>
 </div>
 
-<div class="container detail-page" x-data="detailApp()" x-init="init()">
-  <div x-show="!loaded" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
-
-  <template x-if="loaded && listing">
-    <div class="detail-grid">
-      <div class="detail-info">
-        <img class="detail-image" :src="listing.cover_image || 'https://placehold.co/800x400/e2e8f0/64748b?text=No+Image'" :alt="listing.title">
-        <h1 x-text="listing.title" style="margin-top:var(--space-4)"></h1>
-        <div class="detail-meta">
-          <span x-text="listing.city"></span>
-          <span>🏠 <span x-text="listing.bedrooms || 0"></span> 卧室</span>
-          <span>🚿 <span x-text="listing.bathrooms || 0"></span> 浴室</span>
-          <span>👥 最多 <span x-text="listing.max_guests"></span> 人</span>
-        </div>
-        <p class="detail-desc" x-text="listing.description || '暂无描述'"></p>
-      </div>
-
-      <div>
-        <div class="booking-sidebar">
-          <div class="booking-price">¥<span x-text="listing.price_per_night"></span> <span>/ 晚</span></div>
-          <div class="field">
-            <label class="field-label">入住日期</label>
-            <input class="input" type="date" x-model="booking.checkIn" :min="today">
-          </div>
-          <div class="field">
-            <label class="field-label">离店日期</label>
-            <input class="input" type="date" x-model="booking.checkOut" :min="booking.checkIn || today">
-          </div>
-          <div class="field">
-            <label class="field-label">住客人数</label>
-            <input class="input" type="number" min="1" :max="listing.max_guests" x-model="booking.guests">
-          </div>
-          <div x-show="bookingError" class="mb-3" style="padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem" x-text="bookingError"></div>
-          <button class="btn btn-primary w-full" @click="bookNow()" :disabled="bookingLoading" x-text="bookingLoading ? '处理中...' : '立即预订'"></button>
-        </div>
-      </div>
-    </div>
-  </template>
+<div class="container detail-page" id="detailApp">
+  <div id="detailLoading" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
+  <div id="detailContent" style="display:none"></div>
 </div>
 
 <script>
-function detailApp() {
-  return {
-    listing: null,
-    loaded: false,
-    today: new Date().toISOString().split('T')[0],
-    booking: { checkIn: '', checkOut: '', guests: 1 },
-    bookingLoading: false,
-    bookingError: '',
-    async init() {
-      const id = new URLSearchParams(location.search).get('id');
-      if (!id) return;
-      const res = await api('/api/listings/' + id);
-      if (res.ok) { this.listing = await res.json(); this.loaded = true }
-    },
-    async bookNow() {
-      if (!$store.auth.loggedIn) { window.location.href = '/screens/auth/login.html?next=' + encodeURIComponent(location.href); return }
-      this.bookingError = '';
-      if (!this.booking.checkIn || !this.booking.checkOut) { this.bookingError = '请选择入住和离店日期'; return }
-      const id = new URLSearchParams(location.search).get('id');
-      this.bookingLoading = true;
-      const res = await api('/api/bookings', {
-        method: 'POST',
-        body: JSON.stringify({ listing_id: id, check_in: this.booking.checkIn, check_out: this.booking.checkOut, guests: this.booking.guests || 1 })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        window.location.href = '/screens/bookings/confirm.html?id=' + data.id;
-      } else {
-        try { const e = await res.json(); this.bookingError = e.detail || '预订失败' } catch(_) { this.bookingError = '预订失败' }
-      }
-      this.bookingLoading = false;
-    }
-  }
+var detailState = { listing: null, booking: { checkIn: '', checkOut: '', guests: 1 }, bookingLoading: false, bookingError: '', today: new Date().toISOString().split('T')[0] }
+
+document.addEventListener('DOMContentLoaded', function () {
+  var id = new URLSearchParams(location.search).get('id')
+  if (!id) { document.getElementById('detailLoading').textContent = '缺少房源 ID'; return }
+  apiClient.get('/listings/' + id).then(function (listing) {
+    if (listing) { detailState.listing = listing; renderDetail(listing) }
+  }).catch(function (e) {
+    document.getElementById('detailLoading').textContent = '加载失败，请检查网络连接'
+  })
+})
+
+function renderDetail(listing) {
+  document.getElementById('detailLoading').style.display = 'none'
+  var container = document.getElementById('detailContent')
+  container.style.display = 'block'
+  container.innerHTML =
+    '<div class="detail-grid">' +
+    '<div class="detail-info">' +
+    '<img class="detail-image" src="' + getCoverImage(listing) + '" alt="' + escapeHtml(listing.title) + '" onerror="var n=window.NO_IMAGE_URL;if(n)this.src=n">' +
+    '<h1 style="margin-top:var(--space-4)">' + escapeHtml(listing.title) + '</h1>' +
+    '<div class="detail-meta">' +
+    '<span>' + escapeHtml(listing.city) + '</span>' +
+    '<span>🏠 ' + (listing.bedrooms || 0) + ' 卧室</span>' +
+    '<span>🚿 ' + (listing.bathrooms || 0) + ' 浴室</span>' +
+    '<span>👥 最多 ' + listing.max_guests + ' 人</span>' +
+    '</div>' +
+    '<p class="detail-desc">' + escapeHtml(listing.description || '暂无描述') + '</p>' +
+    '</div>' +
+    '<div>' +
+    '<div class="booking-sidebar">' +
+    '<div class="booking-price">¥' + listing.price_per_night + ' <span>/ 晚</span></div>' +
+    '<div class="field"><label class="field-label">入住日期</label><input class="input" type="date" id="bkCheckIn" min="' + detailState.today + '" onchange="updateCheckOutMin()"></div>' +
+    '<div class="field"><label class="field-label">离店日期</label><input class="input" type="date" id="bkCheckOut"></div>' +
+    '<div class="field"><label class="field-label">住客人数</label><input class="input" type="number" id="bkGuests" min="1" max="' + listing.max_guests + '" value="1"></div>' +
+    '<div id="bookingError" class="mb-3" style="padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;display:none"></div>' +
+    '<button class="btn btn-primary w-full" id="bookBtn" onclick="bookNow()">立即预订</button>' +
+    '</div></div></div>'
+}
+
+function updateCheckOutMin() {
+  var ci = document.getElementById('bkCheckIn').value
+  var co = document.getElementById('bkCheckOut')
+  if (ci) co.min = ci
+}
+
+function bookNow() {
+  if (!requireAuth()) return
+  var errEl = document.getElementById('bookingError')
+  errEl.style.display = 'none'
+  var checkIn = document.getElementById('bkCheckIn').value
+  var checkOut = document.getElementById('bkCheckOut').value
+  var guests = parseInt(document.getElementById('bkGuests').value) || 1
+  if (!checkIn || !checkOut) { errEl.textContent = '请选择入住和离店日期'; errEl.style.display = 'block'; return }
+  var btn = document.getElementById('bookBtn')
+  btn.disabled = true; btn.textContent = '处理中...'
+  var id = new URLSearchParams(location.search).get('id')
+  apiClient.post('/bookings/', { listing_id: id, check_in: checkIn, check_out: checkOut, guests: guests }).then(function (data) {
+    btn.disabled = false; btn.textContent = '立即预订'
+    if (data) window.location.href = '/screens/bookings/confirm.html?id=' + data.id
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = '立即预订'
+    errEl.textContent = e.message; errEl.style.display = 'block'
+  })
 }
 </script>
 </body>

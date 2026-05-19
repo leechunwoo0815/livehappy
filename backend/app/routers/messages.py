@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.middleware.auth import get_current_user
+from app.schemas.common import BaseResponse
 from app.schemas.message import (
     ConversationResponse,
     MessageResponse,
@@ -17,38 +20,83 @@ from app.services.message import (
 
 router = APIRouter()
 
+active_connections: dict[str, WebSocket] = {}
 
-@router.get("/conversations", response_model=list[ConversationResponse])
+
+@router.get("/conversations", response_model=BaseResponse)
 async def list_conversations(
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await get_conversations(db, user_id)
+    convs = await get_conversations(db, user_id)
+    return BaseResponse(
+        success=True,
+        data=[ConversationResponse.model_validate(c) for c in convs],
+    )
 
 
-@router.get("/conversations/{conv_id}/messages", response_model=list[MessageResponse])
+@router.get("/conversations/{conv_id}/messages", response_model=BaseResponse)
 async def list_messages(
     conv_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await get_messages(db, conv_id, user_id)
+    messages = await get_messages(db, conv_id, user_id)
+    return BaseResponse(
+        success=True,
+        data=[MessageResponse.model_validate(m) for m in messages],
+    )
 
 
-@router.post("/send", response_model=MessageResponse, status_code=201)
+@router.post("/send", response_model=BaseResponse, status_code=201)
 async def send(
     data: SendMessageRequest,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await send_message(db, user_id, data.receiver_id, data.content)
+    msg = await send_message(db, user_id, data.receiver_id, data.content)
+    ws = active_connections.get(data.receiver_id)
+    if ws:
+        try:
+            await ws.send_json(
+                {
+                    "type": "new_message",
+                    "conversation_id": msg.conversation_id,
+                    "sender_id": user_id,
+                    "content": data.content,
+                }
+            )
+        except Exception:
+            active_connections.pop(data.receiver_id, None)
+    return BaseResponse(success=True, data=MessageResponse.model_validate(msg))
 
 
-@router.post("/conversations/{conv_id}/read")
+@router.post("/conversations/{conv_id}/read", response_model=BaseResponse)
 async def mark_read(
     conv_id: str,
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     await mark_conversation_read(db, conv_id, user_id)
-    return {"status": "ok"}
+    return BaseResponse(success=True, message="已读")
+
+
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        user_id: str = payload.get("sub")
+        if user_id is None or payload.get("type") != "access":
+            await websocket.close(code=4001)
+            return
+    except JWTError:
+        await websocket.close(code=4001)
+        return
+
+    await websocket.accept()
+    active_connections[user_id] = websocket
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        active_connections.pop(user_id, None)

@@ -5,119 +5,80 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>评价列表 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.review-summary{display:flex;gap:var(--space-8);padding:var(--space-6);border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface)}
+.review-summary{display:flex;gap:var(--space-8);padding:var(--space-6);border:1px solid var(--border);border-radius:var(--radius-xl);background:var(--surface);margin-bottom:var(--space-6)}
 @media(max-width:640px){.review-summary{flex-direction:column;gap:var(--space-4)}}
-.rating-big{font-size:3.5rem;font-weight:600;font-family:var(--font-display);letter-spacing:-0.03em;line-height:1}
-.bar-track{height:6px;border-radius:3px;background:var(--border);overflow:hidden;flex:1}
-.bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width var(--transition-slow)}
+.rating-big{font-size:3.5rem;font-weight:600;line-height:1}
+.stars{display:flex;gap:2px}
+.stars svg{width:16px;height:16px;color:var(--warning)}
+.review-item{padding:var(--space-5) 0;border-bottom:1px solid var(--border-light)}
+.review-item:last-child{border-bottom:none}
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
-    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link">我的订单</a></div>
-    <div class="nav-actions"><button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
-      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-    </button></div>
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links"><a href="/screens/listings/search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link" data-auth-required>我的订单</a></div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
+      <div data-nav-auth></div>
+    </div>
   </div>
 </nav>
 
-<div class="page">
+<div class="page" id="reviewsApp">
   <div class="container" style="max-width:720px">
-    <div class="flex items-center justify-between mb-6">
-      <h1>评价</h1>
-      <button class="btn btn-primary" onclick="window.location.href='write.html'">写评价</button>
-    </div>
-
-    <div class="review-summary mb-6 fade-in">
-      <div class="text-center" style="min-width:100px">
-        <div class="rating-big">4.8</div>
-        <div class="stars mt-2" style="justify-content:center">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </div>
-        <div style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">128 条评价</div>
-      </div>
-      <div class="flex-1 flex flex-col gap-2" style="justify-content:center">
-        <div class="flex items-center gap-2"><span style="font-size:0.875rem;min-width:60px">5 星</span><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><span style="font-size:0.8125rem;color:var(--fg-tertiary);min-width:30px;text-align:right">78%</span></div>
-        <div class="flex items-center gap-2"><span style="font-size:0.875rem;min-width:60px">4 星</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span style="font-size:0.8125rem;color:var(--fg-tertiary);min-width:30px;text-align:right">15%</span></div>
-        <div class="flex items-center gap-2"><span style="font-size:0.875rem;min-width:60px">3 星</span><div class="bar-track"><div class="bar-fill" style="width:5%"></div></div><span style="font-size:0.8125rem;color:var(--fg-tertiary);min-width:30px;text-align:right">5%</span></div>
-        <div class="flex items-center gap-2"><span style="font-size:0.875rem;min-width:60px">2 星</span><div class="bar-track"><div class="bar-fill" style="width:1.5%"></div></div><span style="font-size:0.8125rem;color:var(--fg-tertiary);min-width:30px;text-align:right">1.5%</span></div>
-        <div class="flex items-center gap-2"><span style="font-size:0.875rem;min-width:60px">1 星</span><div class="bar-track"><div class="bar-fill" style="width:0.5%"></div></div><span style="font-size:0.8125rem;color:var(--fg-tertiary);min-width:30px;text-align:right">0.5%</span></div>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active">最新</button>
-      <button class="tab">最高分</button>
-      <button class="tab">最低分</button>
-      <button class="tab">有图</button>
-    </div>
-
-    <div class="review-item">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">李</div>
-        <div>
-          <div style="font-weight:500;font-size:0.9375rem">李明</div>
-          <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年3月</div>
-        </div>
-        <div class="stars ml-auto"><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      </div>
-      <p style="font-size:0.9375rem"><strong>西湖畔·湖景精品酒店</strong> — 非常棒的体验！房间干净整洁，窗外就是西湖美景。房东很热情，给我们推荐了很多周边美食。</p>
-      <div class="flex items-center gap-3 mt-3">
-        <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">👍 有帮助 24</button>
-        <span style="font-size:0.8125rem;color:var(--fg-tertiary)">·</span>
-        <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">回复</button>
-      </div>
-    </div>
-
-    <div class="review-item">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="avatar avatar-sm" style="background:var(--accent-secondary-subtle);color:var(--accent-secondary)">王</div>
-        <div>
-          <div style="font-weight:500;font-size:0.9375rem">王晓</div>
-          <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年2月</div>
-        </div>
-        <div class="stars ml-auto"><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      </div>
-      <p style="font-size:0.9375rem"><strong>西湖畔·湖景精品酒店</strong> — 位置绝佳，步行到西湖只需几分钟。房间设计很有品味，早餐也很丰富。隔音稍微有点差，其他都很完美。</p>
-      <div class="flex items-center gap-3 mt-3">
-        <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">👍 有帮助 18</button>
-        <span style="font-size:0.8125rem;color:var(--fg-tertiary)">·</span>
-        <button class="btn btn-ghost" style="font-size:0.8125rem;color:var(--fg-tertiary);padding:0">回复</button>
-      </div>
-    </div>
-
-    <div class="review-item">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="avatar avatar-sm" style="background:var(--success-subtle);color:var(--success)">陈</div>
-        <div>
-          <div style="font-weight:500;font-size:0.9375rem">陈先生</div>
-          <div style="font-size:0.8125rem;color:var(--fg-tertiary)">2026年1月 · 房东回复</div>
-        </div>
-        <div class="stars ml-auto"><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-      </div>
-      <p style="font-size:0.9375rem"><strong>灵隐·禅意山居民宿</strong> — 非常安静的地方，适合放松身心。早餐的素面很好吃，房间有地暖冬天也很舒服。</p>
-      <div style="margin-top:var(--space-3);padding:var(--space-3);background:var(--surface-hover);border-radius:var(--radius-md);border-left:3px solid var(--accent)">
-        <div style="font-size:0.8125rem;font-weight:500;color:var(--accent)">房东回复</div>
-        <p style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">感谢您的入住和好评！很高兴您喜欢这里的素食和地暖。期待下次再来！</p>
-      </div>
-    </div>
+    <h1 class="mb-6">评价</h1>
+    <div id="reviewsLoading" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
+    <div id="reviewsEmpty" class="text-center py-8" style="color:var(--fg-secondary);display:none"><p>暂无评价</p></div>
+    <div id="reviewsContent" style="display:none"></div>
   </div>
 </div>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function () {
+  var listingId = new URLSearchParams(location.search).get('listing_id')
+  if (!listingId) { document.getElementById('reviewsLoading').style.display = 'none'; document.getElementById('reviewsEmpty').style.display = 'block'; return }
+  apiClient.get('/reviews/listing/' + listingId).then(function (reviews) {
+    document.getElementById('reviewsLoading').style.display = 'none'
+    if (!reviews || reviews.length === 0) { document.getElementById('reviewsEmpty').style.display = 'block'; return }
+    var avg = (reviews.reduce(function (s, r) { return s + r.rating }, 0) / reviews.length).toFixed(1)
+    var starSvg = function (filled) {
+      return '<svg viewBox="0 0 24 24" fill="' + (filled ? 'currentColor' : 'none') + '" stroke="' + (filled ? 'currentColor' : 'var(--border)') + '" stroke-width="2" style="width:16px;height:16px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+    }
+    var starsHtml = ''
+    for (var i = 1; i <= 5; i++) starsHtml += starSvg(i <= Math.round(avg))
+    var html = '<div class="review-summary fade-in"><div class="text-center" style="min-width:100px">' +
+      '<div class="rating-big">' + avg + '</div>' +
+      '<div class="stars mt-2" style="justify-content:center">' + starsHtml + '</div>' +
+      '<div style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">' + reviews.length + ' 条评价</div></div></div>'
+    reviews.forEach(function (review) {
+      var s = ''
+      for (var j = 1; j <= 5; j++) s += starSvg(j <= review.rating)
+      html += '<div class="review-item">' +
+        '<div class="flex items-center gap-3 mb-2">' +
+        '<div class="avatar avatar-sm" style="background:var(--accent-subtle);color:var(--accent)">' + escapeHtml((review.user_id || 'U').charAt(0).toUpperCase()) + '</div>' +
+        '<div><div style="font-weight:500;font-size:0.9375rem">' + escapeHtml('用户' + (review.user_id || '').substring(0, 6)) + '</div>' +
+        '<div style="font-size:0.8125rem;color:var(--fg-tertiary)">' + (review.created_at ? new Date(review.created_at).toLocaleDateString() : '') + '</div></div>' +
+        '<div class="stars ml-auto">' + s + '</div></div>' +
+        '<p style="font-size:0.9375rem">' + escapeHtml(review.content || '无评价内容') + '</p>'
+      if (review.reply) {
+        html += '<div style="margin-top:var(--space-3);padding:var(--space-3);background:var(--surface-hover);border-radius:var(--radius-md);border-left:3px solid var(--accent)">' +
+          '<div style="font-size:0.8125rem;font-weight:500;color:var(--accent)">房东回复</div>' +
+          '<p style="font-size:0.875rem;color:var(--fg-secondary);margin-top:var(--space-1)">' + escapeHtml(review.reply) + '</p></div>'
+      }
+      html += '</div>'
+    })
+    document.getElementById('reviewsContent').innerHTML = html
+    document.getElementById('reviewsContent').style.display = 'block'
+  }).catch(function () {
+    document.getElementById('reviewsLoading').style.display = 'none'
+  })
+})
 </script>
 </body>
 </html>

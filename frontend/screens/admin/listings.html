@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>房源管理 — 开心住 LiveHappy 管理后台</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - var(--nav-height))}
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - var(--nav-height));padding-top:var(--nav-height)}
 @media(max-width:1023px){.admin-layout{grid-template-columns:1fr}}
 .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:var(--space-4)}
 @media(max-width:1023px){.sidebar{display:none}}
@@ -19,13 +18,9 @@
 .sidebar-item svg{width:20px;height:20px}
 .admin-main{padding:var(--space-8);overflow-y:auto}
 @media(max-width:640px){.admin-main{padding:var(--space-4)}}
-.listing-row{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);border-bottom:1px solid var(--border-light);font-size:0.9375rem}
-.listing-row:last-child{border-bottom:none}
-.listing-row img{width:56px;height:40px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0}
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
     <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
@@ -39,7 +34,6 @@
     </div>
   </div>
 </nav>
-
 <div class="admin-layout">
   <aside class="sidebar">
     <div class="sidebar-item" onclick="window.location.href='dashboard.html'">
@@ -49,117 +43,128 @@
     <div class="sidebar-item active">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       房源管理
-      <span class="badge badge-warning" style="margin-left:auto;font-size:0.6875rem;padding:1px 6px">12</span>
     </div>
     <div class="sidebar-item" onclick="window.location.href='users.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
       用户管理
     </div>
   </aside>
-
   <main class="admin-main">
-    <div class="flex items-center justify-between mb-6">
-      <h1>房源管理</h1>
-      <div class="flex gap-2">
-        <input type="text" class="input" placeholder="搜索房源..." style="width:240px;font-size:0.875rem;padding:8px 12px">
-        <button class="btn btn-primary btn-sm">+ 添加房源</button>
-      </div>
+    <div class="flex items-center justify-between mb-6"><h1>房源管理</h1></div>
+    <div id="errorMsg" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-4)"></div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="all" onclick="switchTab('all')">全部</button>
+      <button class="tab" data-tab="pending" onclick="switchTab('pending')">待审核</button>
+      <button class="tab" data-tab="approved" onclick="switchTab('approved')">已上架</button>
+      <button class="tab" data-tab="rejected" onclick="switchTab('rejected')">已拒绝</button>
     </div>
-
-    <div class="tabs">
-      <button class="tab active">全部 (3,256)</button>
-      <button class="tab">待审核 (12)</button>
-      <button class="tab">已上架 (3,108)</button>
-      <button class="tab">已下架 (136)</button>
-    </div>
-
     <div class="card p-0">
       <div class="table-wrap" style="border:none">
         <table>
-          <thead>
-            <tr><th style="width:30px"><input type="checkbox" style="accent-color:var(--accent)"></th><th>房源</th><th>房东</th><th>价格</th><th>评分</th><th>订单</th><th>状态</th><th>操作</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=80" alt="">西湖畔·湖景精品酒店</div></td>
-              <td>张先生</td>
-              <td>¥588</td>
-              <td>4.9</td>
-              <td>128</td>
-              <td><span class="badge badge-success">已上架</span></td>
-              <td><button class="btn btn-ghost btn-sm">编辑</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?w=100&q=80" alt="">灵隐·禅意山居民宿</div></td>
-              <td>王女士</td>
-              <td>¥420</td>
-              <td>4.8</td>
-              <td>96</td>
-              <td><span class="badge badge-success">已上架</span></td>
-              <td><button class="btn btn-ghost btn-sm">编辑</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=100&q=80" alt="">钱塘江畔·天际奢华公寓</div></td>
-              <td>李女士</td>
-              <td>¥899</td>
-              <td>4.7</td>
-              <td>203</td>
-              <td><span class="badge badge-success">已上架</span></td>
-              <td><button class="btn btn-ghost btn-sm">编辑</button></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=100&q=80" alt="">西溪湿地·度假别墅</div></td>
-              <td>王先生</td>
-              <td>¥1,200</td>
-              <td>—</td>
-              <td>0</td>
-              <td><span class="badge badge-warning">待审核</span></td>
-              <td><div class="flex gap-2"><button class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 10px">通过</button><button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px">拒绝</button></div></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1590490359683-658d3d6f972e?w=100&q=80" alt="">河坊街·精品公寓</div></td>
-              <td>陈先生</td>
-              <td>¥520</td>
-              <td>—</td>
-              <td>0</td>
-              <td><span class="badge badge-warning">待审核</span></td>
-              <td><div class="flex gap-2"><button class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 10px">通过</button><button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px">拒绝</button></div></td>
-            </tr>
-            <tr>
-              <td><input type="checkbox" style="accent-color:var(--accent)"></td>
-              <td><div class="flex items-center gap-2"><img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=100&q=80" alt="">龙井茶园·山景独栋</div></td>
-              <td>陈先生</td>
-              <td>¥680</td>
-              <td>4.9</td>
-              <td>67</td>
-              <td><span class="badge badge-neutral">已下架</span></td>
-              <td><button class="btn btn-ghost btn-sm">编辑</button></td>
-            </tr>
-          </tbody>
+          <thead><tr><th>房源</th><th>城市</th><th>价格</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody id="listingTableBody"></tbody>
         </table>
       </div>
     </div>
-
     <div class="flex items-center justify-between mt-4">
-      <span class="text-small">显示 1-6 / 共 3,256 间</span>
+      <span class="text-small" id="paginationInfo"></span>
       <div class="flex gap-2">
-        <button class="btn btn-outline btn-sm">上一页</button>
-        <button class="btn btn-primary btn-sm">1</button>
-        <button class="btn btn-outline btn-sm">2</button>
-        <button class="btn btn-outline btn-sm">3</button>
-        <button class="btn btn-outline btn-sm">下一页</button>
+        <button class="btn btn-outline btn-sm" id="prevBtn" onclick="prevPage()" disabled>上一页</button>
+        <button class="btn btn-primary btn-sm" id="pageBtn">1</button>
+        <button class="btn btn-outline btn-sm" id="nextBtn" onclick="nextPage()" disabled>下一页</button>
       </div>
     </div>
   </main>
 </div>
-
+<div id="editModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:var(--radius-xl);padding:var(--space-6);width:90%;max-width:480px">
+    <h3 style="margin-bottom:var(--space-4)">编辑房源</h3>
+    <div class="field"><label class="field-label">标题</label><input class="input" id="editTitle" type="text"></div>
+    <div class="field"><label class="field-label">城市</label><input class="input" id="editCity" type="text"></div>
+    <div class="field"><label class="field-label">价格（¥/晚）</label><input class="input" id="editPrice" type="number" min="0"></div>
+    <div id="editError" style="display:none;padding:var(--space-2);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-3)"></div>
+    <div class="flex gap-2" style="justify-content:flex-end;margin-top:var(--space-4)">
+      <button class="btn btn-outline" onclick="closeEdit()">取消</button>
+      <button class="btn btn-primary" id="editSaveBtn" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
 <script>
-(function() {
+let editingId = null;
+let listState = { page: 1, status: '', total: 0 };
+
+async function loadListings() {
+  const s = listState.status || '';
+  let r;
+  try {
+    r = await apiClient.get('/admin/listings?page=' + listState.page + '&size=20' + (s ? '&status=' + s : ''));
+  } catch (e) {
+    r = { items: [], total: 0 };
+  }
+  listState.total = r.total || 0;
+  const tb = document.getElementById('listingTableBody');
+  tb.innerHTML = r.items.map(function (item) {
+    var statusHtml = '<span class="badge' + (item.status === 'approved' ? ' badge-success' : item.status === 'pending' ? ' badge-warning' : ' badge-danger') + '">' + statusLabel(item.status) + '</span>';
+    var actionHtml = item.status === 'pending'
+      ? '<button class="btn btn-primary btn-sm" style="font-size:0.75rem;padding:4px 10px" onclick="approveItem(\'' + item.id + '\',\'approve\')">通过</button> <button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px" onclick="approveItem(\'' + item.id + '\',\'reject\')">拒绝</button>'
+      : '<button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px" onclick="editItem(\'' + item.id + '\',\'' + escapeHtml(item.title) + '\',\'' + escapeHtml(item.city) + '\',' + item.price_per_night + ')">编辑</button> <button class="btn btn-outline btn-sm" style="font-size:0.75rem;padding:4px 10px;color:var(--danger)" onclick="deleteItem(\'' + item.id + '\')">删除</button>';
+    return '<tr><td><div style="font-weight:500">' + escapeHtml(item.title) + '</div></td><td>' + escapeHtml(item.city) + '</td><td>¥' + item.price_per_night + '</td><td>' + statusHtml + '</td><td>' + actionHtml + '</td></tr>';
+  }).join('');
+  document.getElementById('paginationInfo').textContent = '共 ' + listState.total + ' 条';
+  document.getElementById('prevBtn').disabled = listState.page <= 1;
+  document.getElementById('nextBtn').disabled = listState.page * 20 >= listState.total;
+  document.getElementById('pageBtn').textContent = listState.page;
+}
+function switchTab(s) {
+  listState.status = s === 'all' ? '' : s;
+  listState.page = 1;
+  document.querySelectorAll('#tabs .tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === s) });
+  loadListings();
+}
+function prevPage() { if (listState.page > 1) { listState.page--; loadListings() } }
+function nextPage() { if (listState.page * 20 < listState.total) { listState.page++; loadListings() } }
+function showError(m) { var e = document.getElementById('errorMsg'); e.textContent = m; e.style.display = ''; }
+async function approveItem(id, action) {
+  try {
+    await apiClient.post('/listings/' + id + '/approve', { action });
+    loadListings();
+  } catch (e) {
+    showError('操作失败');
+  }
+}
+function editItem(id, title, city, price) {
+  editingId = id;
+  document.getElementById('editTitle').value = title;
+  document.getElementById('editCity').value = city;
+  document.getElementById('editPrice').value = price;
+  document.getElementById('editModal').style.display = 'flex';
+  document.getElementById('editError').style.display = 'none';
+}
+function closeEdit() { document.getElementById('editModal').style.display = 'none'; editingId = null; }
+async function saveEdit() {
+  const btn = document.getElementById('editSaveBtn');
+  btn.disabled = true; btn.textContent = '保存中...';
+  const err = document.getElementById('editError');
+  const data = { title: document.getElementById('editTitle').value, city: document.getElementById('editCity').value, price_per_night: parseFloat(document.getElementById('editPrice').value) };
+  try {
+    await apiClient.put('/listings/' + editingId, data);
+    closeEdit(); loadListings();
+  } catch (e) {
+    err.textContent = e.message || '保存失败';
+    err.style.display = '';
+  }
+  btn.disabled = false; btn.textContent = '保存';
+}
+async function deleteItem(id) {
+  if (!confirm('确定要删除这个房源吗？')) return;
+  try {
+    await apiClient.delete('/listings/' + id);
+    loadListings();
+  } catch (e) {
+    showError('删除失败');
+  }
+}
+document.addEventListener('DOMContentLoaded', loadListings);
 </script>
 </body>
 </html>

@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>预订确认 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.page{padding:var(--space-8) 0}
+.page{padding:var(--space-8) 0;padding-top:calc(var(--nav-height) + var(--space-8))}
 .confirm-card{max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-8);text-align:center}
 .confirm-icon{font-size:3rem;margin-bottom:var(--space-4)}
 .confirm-detail{text-align:left;margin-top:var(--space-6)}
@@ -19,46 +19,72 @@
 </style>
 </head>
 <body>
-<div class="container page" x-data="confirmApp()" x-init="init()">
-  <div x-show="!loaded" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
-
-  <template x-if="loaded && booking">
-    <div class="confirm-card">
-      <div class="confirm-icon">🎉</div>
-      <h2>预订成功！</h2>
-      <p style="color:var(--fg-secondary);font-size:0.875rem">订单已提交，等待房东确认</p>
-
-      <div class="confirm-detail">
-        <div class="confirm-row"><span>订单编号</span><span x-text="booking.id"></span></div>
-        <div class="confirm-row"><span>入住日期</span><span x-text="booking.check_in"></span></div>
-        <div class="confirm-row"><span>离店日期</span><span x-text="booking.check_out"></span></div>
-        <div class="confirm-row"><span>住客人数</span><span x-text="booking.guests"></span></div>
-        <div class="confirm-row"><span>订单状态</span><span class="badge" :class="'badge-' + booking.status" x-text="statusLabel(booking.status)"></span></div>
-        <div class="confirm-row confirm-total"><span>总金额</span><span>¥<span x-text="booking.total_price"></span></span></div>
-      </div>
-
-      <div style="margin-top:var(--space-6)">
-        <a href="/screens/bookings/list.html" class="btn btn-primary">查看所有订单</a>
-        <a href="/screens/listings/search.html" class="btn btn-outline" style="margin-left:var(--space-2)">继续搜索</a>
-      </div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
+      <a href="/screens/bookings/list.html" class="nav-link" data-auth-required>我的订单</a>
+      <a href="/screens/messages/list.html" class="nav-link" data-auth-required>消息</a>
     </div>
-  </template>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <div data-nav-auth></div>
+    </div>
+    <button class="nav-mobile-toggle" onclick="toggleMobileNav()" aria-label="菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="/screens/listings/search.html" onclick="toggleMobileNav()">搜索房源</a>
+  <a href="/screens/bookings/list.html" onclick="toggleMobileNav()" data-auth-required>我的订单</a>
+  <a href="/screens/messages/list.html" onclick="toggleMobileNav()" data-auth-required>消息</a>
+  <a href="/screens/ai/chat.html" onclick="toggleMobileNav()" data-auth-required>AI 助手</a>
+  <div data-nav-auth-mobile></div>
+</div>
+
+<div class="container page" id="confirmApp">
+  <div id="confirmLoading" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
+  <div id="confirmError" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.875rem;margin-bottom:var(--space-4);text-align:center"></div>
+  <div id="confirmContent" style="display:none"></div>
 </div>
 
 <script>
-function confirmApp() {
-  return {
-    booking: null,
-    loaded: false,
-    statusLabel(s) { return {pending:'待付款',paid:'已支付',confirmed:'已确认',cancelled:'已取消'}[s] || s },
-    async init() {
-      const id = new URLSearchParams(location.search).get('id');
-      if (!id) return;
-      const res = await api('/api/bookings/' + id);
-      if (res.ok) { this.booking = await res.json(); this.loaded = true }
-    }
-  }
-}
+document.addEventListener('DOMContentLoaded', function () {
+  var id = new URLSearchParams(location.search).get('id')
+  if (!id) { document.getElementById('confirmError').textContent = '缺少订单 ID'; document.getElementById('confirmError').style.display = 'block'; return }
+  apiClient.get('/bookings/' + id).then(function (booking) {
+    if (!booking) throw new Error('订单不存在')
+    document.getElementById('confirmLoading').style.display = 'none'
+    var html =
+      '<div class="confirm-card">' +
+      '<div class="confirm-icon">🎉</div>' +
+      '<h2>预订成功！</h2>' +
+      '<p style="color:var(--fg-secondary);font-size:0.875rem">订单已提交，等待房东确认</p>' +
+      '<div class="confirm-detail">' +
+      '<div class="confirm-row"><span>订单编号</span><span>' + escapeHtml(booking.id) + '</span></div>' +
+      '<div class="confirm-row"><span>入住日期</span><span>' + escapeHtml(booking.check_in) + '</span></div>' +
+      '<div class="confirm-row"><span>离店日期</span><span>' + escapeHtml(booking.check_out) + '</span></div>' +
+      '<div class="confirm-row"><span>住客人数</span><span>' + (booking.guests || '') + '</span></div>' +
+      '<div class="confirm-row"><span>订单状态</span><span class="badge badge-' + booking.status + '">' + statusLabel(booking.status) + '</span></div>' +
+      '<div class="confirm-row confirm-total"><span>总金额</span><span>¥' + (booking.total_price || '') + '</span></div>' +
+      '</div>' +
+      '<div style="margin-top:var(--space-6)">' +
+      '<a href="/screens/bookings/list.html" class="btn btn-primary">查看所有订单</a>' +
+      '<a href="/screens/listings/search.html" class="btn btn-outline" style="margin-left:var(--space-2)">继续搜索</a>' +
+      '</div></div>'
+    document.getElementById('confirmContent').innerHTML = html
+    document.getElementById('confirmContent').style.display = 'block'
+  }).catch(function (e) {
+    document.getElementById('confirmLoading').style.display = 'none'
+    document.getElementById('confirmError').textContent = e.message
+    document.getElementById('confirmError').style.display = 'block'
+  })
+})
 </script>
 </body>
 </html>

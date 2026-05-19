@@ -5,125 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>发布房源 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
+<style>
+.step-circle{width:28px;height:28px;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:600}
+</style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="nav-inner">
-    <a href="/index.html" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
-    <div class="nav-links"><a href="search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link">我的订单</a></div>
-    <div class="nav-actions"><button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
-      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-    </button></div>
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links"><a href="search.html" class="nav-link">搜索房源</a><a href="/screens/bookings/list.html" class="nav-link" data-auth-required>我的订单</a></div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
+      <div data-nav-auth></div>
+    </div>
   </div>
 </nav>
 
-<div class="page">
+<div class="page" id="createApp">
   <div class="container" style="max-width:640px">
     <div class="flex items-center gap-2 mb-6">
       <span class="badge badge-accent">房东中心</span>
       <h1 style="font-size:1.5rem">发布新房源</h1>
     </div>
 
-    <div class="card mb-6">
-      <div class="flex gap-3 mb-6">
-        <div class="flex items-center gap-2"><div style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--accent);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:600">1</div><span style="font-weight:500">基本信息</span></div>
-        <div class="flex items-center gap-2" style="color:var(--fg-tertiary)"><div style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:600">2</div><span>详情</span></div>
-        <div class="flex items-center gap-2" style="color:var(--fg-tertiary)"><div style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:600">3</div><span>照片</span></div>
-        <div class="flex items-center gap-2" style="color:var(--fg-tertiary)"><div style="width:28px;height:28px;border-radius:var(--radius-full);background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.8125rem;font-weight:600">4</div><span>发布</span></div>
+    <div id="createError" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.8125rem;margin-bottom:var(--space-4)"></div>
+    <div id="createSuccess" style="display:none" class="alert alert-success mb-4">
+      <div><div style="font-weight:500">房源发布成功！等待平台审核</div></div>
+    </div>
+
+    <div class="card" id="createForm">
+      <div class="flex gap-3 mb-6" style="font-size:0.875rem">
+        <div class="flex items-center gap-2"><div class="step-circle" style="background:var(--accent);color:var(--white)">1</div><span style="font-weight:500">基本信息</span></div>
+        <div class="flex items-center gap-2" style="color:var(--fg-tertiary)"><div class="step-circle" style="background:var(--border)">2</div><span>照片</span></div>
       </div>
 
       <div class="form-group">
         <label class="form-label">房源标题 <span style="color:var(--danger)">*</span></label>
-        <input type="text" class="input" placeholder="例如：西湖畔·湖景精品酒店" value="西湖畔·湖景精品酒店">
+        <input type="text" class="input" id="fTitle" placeholder="例如：西湖畔·湖景精品酒店">
       </div>
       <div class="form-group">
-        <label class="form-label">房源类型 <span style="color:var(--danger)">*</span></label>
-        <select class="input">
-          <option>整套房源</option>
-          <option>独立房间</option>
-          <option>合住房间</option>
-        </select>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="form-group">
-          <label class="form-label">最大住客数</label>
-          <select class="input"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8+</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">卧室数</label>
-          <select class="input"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">床位数</label>
-          <select class="input"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5+</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">卫生间数</label>
-          <select class="input"><option>1</option><option selected>2</option><option>3</option><option>4+</option></select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">所在地 <span style="color:var(--danger)">*</span></label>
-        <input type="text" class="input" placeholder="城市、区域" value="杭州 · 西湖区">
+        <label class="form-label">城市 <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="input" id="fCity" placeholder="如：杭州">
       </div>
       <div class="form-group">
         <label class="form-label">详细地址</label>
-        <input type="text" class="input" placeholder="街道、门牌号">
+        <input type="text" class="input" id="fAddress" placeholder="街道、门牌号">
       </div>
-      <div class="form-group">
-        <label class="form-label">每晚价格 (¥) <span style="color:var(--danger)">*</span></label>
-        <input type="number" class="input" placeholder="588" value="588">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="form-label">每晚价格 (¥) <span style="color:var(--danger)">*</span></label>
+          <input type="number" class="input" id="fPrice" placeholder="588" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">最大住客数</label>
+          <input type="number" class="input" id="fGuests" placeholder="2" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">卧室数</label>
+          <input type="number" class="input" id="fBedrooms" placeholder="1" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">卫生间数</label>
+          <input type="number" class="input" id="fBathrooms" placeholder="1" min="0">
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">房源描述</label>
-        <textarea class="input" rows="5" placeholder="描述你的房源特色、周边环境、交通信息等">位于西湖核心景区，步行 3 分钟可达断桥残雪。酒店融合现代设计与江南园林元素，每个房间都可欣赏湖景或园景。配备高端床品、智能家居系统，提供免费早餐和茶歇。</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">设施服务</label>
-        <div class="grid grid-cols-2 gap-2">
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" checked style="accent-color:var(--accent)"> WiFi</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" checked style="accent-color:var(--accent)"> 空调</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" style="accent-color:var(--accent)"> 厨房</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" checked style="accent-color:var(--accent)"> 洗衣机</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" checked style="accent-color:var(--accent)"> 电视</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" style="accent-color:var(--accent)"> 停车位</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" style="accent-color:var(--accent)"> 泳池</label>
-          <label class="flex items-center gap-2" style="font-size:0.9375rem;padding:var(--space-2) 0"><input type="checkbox" style="accent-color:var(--accent)"> 健身房</label>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">上传照片</label>
-        <div style="border:2px dashed var(--border);border-radius:var(--radius-lg);padding:var(--space-8);text-align:center;cursor:pointer;transition:border-color var(--transition-fast)" onclick="alert('选择照片')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:40px;height:40px;margin:0 auto var(--space-3);color:var(--fg-tertiary)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          <p style="font-size:0.9375rem;color:var(--fg-secondary)">点击上传照片（最多 10 张）</p>
-          <p style="font-size:0.8125rem;color:var(--fg-tertiary);margin-top:var(--space-1)">支持 JPG、PNG，每张不超过 10MB</p>
-        </div>
-        <div class="flex gap-2 mt-3">
-          <div style="width:80px;height:80px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)">
-            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80" alt="" style="width:100%;height:100%;object-fit:cover">
-          </div>
-          <div style="width:80px;height:80px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border)">
-            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80&fit=crop&h=200" alt="" style="width:100%;height:100%;object-fit:cover">
-          </div>
-          <div style="width:80px;height:80px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--surface-hover);color:var(--fg-tertiary);font-size:0.75rem;cursor:pointer">+5 张</div>
-        </div>
+        <textarea class="input" id="fDescription" rows="4" placeholder="描述你的房源特色..."></textarea>
       </div>
 
       <div class="flex gap-3 mt-6">
-        <button class="btn btn-outline flex-1">保存草稿</button>
-        <button class="btn btn-primary flex-1" onclick="alert('提交审核')">提交审核</button>
+        <button class="btn btn-outline flex-1" onclick="history.back()">取消</button>
+        <button class="btn btn-primary flex-1" id="submitBtn" onclick="submitListing()">提交审核</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function () {
+  if (!requireAuth()) return
+})
+
+function submitListing() {
+  var title = document.getElementById('fTitle').value.trim()
+  var city = document.getElementById('fCity').value.trim()
+  var price = document.getElementById('fPrice').value
+  var errEl = document.getElementById('createError')
+  errEl.style.display = 'none'
+  if (!title) { errEl.textContent = '请填写房源标题'; errEl.style.display = 'block'; return }
+  if (!city) { errEl.textContent = '请填写城市'; errEl.style.display = 'block'; return }
+  if (!price) { errEl.textContent = '请填写每晚价格'; errEl.style.display = 'block'; return }
+  var btn = document.getElementById('submitBtn')
+  btn.disabled = true; btn.textContent = '提交中...'
+  apiClient.post('/listings/', {
+    title: title, city: city,
+    address: document.getElementById('fAddress').value || null,
+    description: document.getElementById('fDescription').value || null,
+    price_per_night: parseFloat(price),
+    max_guests: parseInt(document.getElementById('fGuests').value) || 2,
+    bedrooms: parseInt(document.getElementById('fBedrooms').value) || null,
+    bathrooms: parseInt(document.getElementById('fBathrooms').value) || null
+  }).then(function () {
+    btn.disabled = false; btn.textContent = '提交审核'
+    document.getElementById('createForm').style.display = 'none'; document.getElementById('createSuccess').style.display = 'block'
+  }).catch(function (e) {
+    btn.disabled = false; btn.textContent = '提交审核'
+    errEl.textContent = e.message; errEl.style.display = 'block'
+  })
+}
 </script>
 </body>
 </html>

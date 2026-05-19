@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI 助手 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
 .page{padding:var(--space-8) 0}
@@ -29,61 +29,63 @@
 </style>
 </head>
 <body>
-<div class="container page" x-data="chatApp()" x-init="init()">
+<div class="container page" id="chatApp">
   <div class="chat-container">
     <div class="chat-header">🤖 AI 旅行助手</div>
-
-    <div class="chat-messages" x-ref="messages">
-      <template x-for="(msg, i) in messages" :key="i">
-        <div class="chat-msg" :class="'chat-msg-' + msg.role">
-          <div class="chat-msg-content" x-text="msg.content"></div>
-          <div class="chat-msg-time" x-text="msg.time"></div>
-        </div>
-      </template>
-      <div x-show="loading" class="chat-msg chat-msg-assistant">
-        <div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-      </div>
-    </div>
-
+    <div class="chat-messages" id="aiMessages"></div>
     <div class="chat-input">
-      <input class="input" type="text" placeholder="输入你的问题..." x-model="input" @keydown.enter="send()" :disabled="loading">
-      <button class="btn btn-primary" @click="send()" :disabled="loading || !input.trim()" x-text="loading ? '...' : '发送'"></button>
+      <input class="input" type="text" id="aiInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendAiMessage()">
+      <button class="btn btn-primary" id="aiSendBtn" onclick="sendAiMessage()">发送</button>
     </div>
   </div>
 </div>
 
 <script>
-function chatApp() {
-  return {
-    messages: [
-      { role: 'assistant', content: '你好！我是开心住的 AI 旅行助手。我可以帮你推荐房源、规划行程、回答预订相关问题。有什么可以帮你的吗？', time: new Date().toLocaleTimeString() }
-    ],
-    input: '',
-    loading: false,
-    init() {
-      this.$nextTick(() => this.scrollDown())
-    },
-    scrollDown() {
-      this.$nextTick(() => { const el = this.$refs.messages; if (el) el.scrollTop = el.scrollHeight })
-    },
-    async send() {
-      if (!this.input.trim() || this.loading) return
-      const text = this.input.trim()
-      this.messages.push({ role: 'user', content: text, time: new Date().toLocaleTimeString() })
-      this.input = ''
-      this.loading = true
-      this.scrollDown()
-      const res = await api('/api/ai/chat', { method: 'POST', body: JSON.stringify({ message: text }) })
-      this.loading = false
-      if (res.ok) {
-        const data = await res.json()
-        this.messages.push({ role: 'assistant', content: data.reply, time: new Date().toLocaleTimeString() })
-      } else {
-        this.messages.push({ role: 'assistant', content: '抱歉，我暂时无法回答。请稍后再试。', time: new Date().toLocaleTimeString() })
-      }
-      this.scrollDown()
-    }
+var aiState = {
+  messages: [{ role: 'assistant', content: '你好！我是开心住的 AI 旅行助手。我可以帮你推荐房源、规划行程、回答预订相关问题。有什么可以帮你的吗？', time: new Date().toLocaleTimeString() }],
+  loading: false
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  renderAiMessages()
+})
+
+function renderAiMessages() {
+  var el = document.getElementById('aiMessages')
+  el.innerHTML = aiState.messages.map(function (m) {
+    return '<div class="chat-msg chat-msg-' + m.role + '">' +
+      '<div class="chat-msg-content">' + escapeHtml(m.content) + '</div>' +
+      '<div class="chat-msg-time">' + m.time + '</div></div>'
+  }).join('')
+  if (aiState.loading) {
+    el.innerHTML += '<div class="chat-msg chat-msg-assistant"><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>'
   }
+  el.scrollTop = el.scrollHeight
+}
+
+function sendAiMessage() {
+  var input = document.getElementById('aiInput')
+  var text = input.value.trim()
+  if (!text || aiState.loading) return
+  aiState.messages.push({ role: 'user', content: text, time: new Date().toLocaleTimeString() })
+  input.value = ''
+  aiState.loading = true
+  var btn = document.getElementById('aiSendBtn')
+  btn.disabled = true; btn.textContent = '...'
+  renderAiMessages()
+  apiClient.post('/ai/chat', { content: text }).then(function (data) {
+    aiState.loading = false; btn.disabled = false; btn.textContent = '发送'
+    if (data) {
+      aiState.messages.push({ role: 'assistant', content: data.reply, time: new Date().toLocaleTimeString() })
+    } else {
+      aiState.messages.push({ role: 'assistant', content: '抱歉，我暂时无法回答。请稍后再试。', time: new Date().toLocaleTimeString() })
+    }
+    renderAiMessages()
+  }).catch(function () {
+    aiState.loading = false; btn.disabled = false; btn.textContent = '发送'
+    aiState.messages.push({ role: 'assistant', content: '抱歉，我暂时无法回答。请稍后再试。', time: new Date().toLocaleTimeString() })
+    renderAiMessages()
+  })
 }
 </script>
 </body>

@@ -5,11 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>订单详情 — 开心住 LiveHappy</title>
 <link rel="stylesheet" href="/css/system.css">
-<script src="/js/htmx.min.js"></script>
-<script src="/js/alpine.min.js" defer></script>
+<script src="/js/api-client.js"></script>
 <script src="/js/app.js"></script>
 <style>
-.page{padding:var(--space-8) 0}
+.page{padding:var(--space-8) 0;padding-top:calc(var(--nav-height) + var(--space-8))}
 .detail-card{max-width:600px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-8)}
 .detail-row{display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--border);font-size:0.875rem}
 .detail-row:last-child{border-bottom:0}
@@ -21,51 +20,87 @@
 </style>
 </head>
 <body>
-<div class="container page" x-data="detailApp()" x-init="init()">
-  <div x-show="!loaded" class="text-center py-8">加载中...</div>
-
-  <template x-if="loaded && booking">
-    <div class="detail-card">
-      <h2>订单详情</h2>
-      <div class="detail-row"><span>订单编号</span><span x-text="booking.id" style="font-size:0.8125rem"></span></div>
-      <div class="detail-row"><span>房源</span><span x-text="booking.listing_title || ('#' + booking.listing_id)"></span></div>
-      <div class="detail-row"><span>入住</span><span x-text="booking.check_in"></span></div>
-      <div class="detail-row"><span>离店</span><span x-text="booking.check_out"></span></div>
-      <div class="detail-row"><span>住客</span><span x-text="booking.guests">人</span></div>
-      <div class="detail-row"><span>状态</span><span class="badge" :class="'badge-' + booking.status" x-text="statusLabel(booking.status)"></span></div>
-      <div class="detail-row"><span>总金额</span><span style="font-weight:700;color:var(--accent)">¥<span x-text="booking.total_price"></span></span></div>
-      <div x-show="booking.cancel_reason" class="detail-row"><span>取消原因</span><span x-text="booking.cancel_reason" style="color:var(--danger)"></span></div>
-
-      <div style="margin-top:var(--space-6);display:flex;gap:var(--space-3)">
-        <a :href="'/screens/listings/detail.html?id=' + booking.listing_id" class="btn btn-outline">查看房源</a>
-        <button x-show="booking.status === 'pending'" class="btn btn-danger" @click="cancelBooking()" :disabled="cancelling" x-text="cancelling ? '取消中...' : '取消订单'"></button>
-      </div>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand"><span class="nav-brand-icon">K</span>开心住</a>
+    <div class="nav-links">
+      <a href="/screens/listings/search.html" class="nav-link">搜索房源</a>
+      <a href="/screens/bookings/list.html" class="nav-link active" data-auth-required>我的订单</a>
     </div>
-  </template>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切换主题">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <div data-nav-auth></div>
+    </div>
+    <button class="nav-mobile-toggle" onclick="toggleMobileNav()" aria-label="菜单">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="/screens/listings/search.html" onclick="toggleMobileNav()">搜索房源</a>
+  <a href="/screens/bookings/list.html" onclick="toggleMobileNav()" data-auth-required>我的订单</a>
+  <a href="/screens/messages/list.html" onclick="toggleMobileNav()" data-auth-required>消息</a>
+  <a href="/screens/ai/chat.html" onclick="toggleMobileNav()" data-auth-required>AI 助手</a>
+  <div data-nav-auth-mobile></div>
+</div>
+
+<div class="container page" id="detailApp">
+  <div id="detailLoading" class="text-center py-8" style="color:var(--fg-secondary)">加载中...</div>
+  <div id="detailError" style="display:none;padding:var(--space-3);border-radius:var(--radius-md);background:var(--danger-subtle);color:var(--danger);font-size:0.875rem;margin-bottom:var(--space-4);text-align:center"></div>
+  <div id="detailContent" style="display:none"></div>
 </div>
 
 <script>
-function detailApp() {
-  return {
-    booking: null,
-    loaded: false,
-    cancelling: false,
-    statusLabel(s) { return {pending:'待付款',paid:'已支付',confirmed:'已确认',cancelled:'已取消'}[s] || s },
-    async init() {
-      const id = new URLSearchParams(location.search).get('id');
-      if (!id) return;
-      const res = await api('/api/bookings/' + id);
-      if (res.ok) { this.booking = await res.json(); this.loaded = true }
-    },
-    async cancelBooking() {
-      if (!confirm('确定要取消这个订单吗？')) return;
-      this.cancelling = true;
-      const res = await api('/api/bookings/' + this.booking.id + '/cancel', { method: 'POST', body: '{}' });
-      if (res.ok) { this.booking = await res.json() }
-      else { alert('取消失败') }
-      this.cancelling = false;
+document.addEventListener('DOMContentLoaded', function () {
+  var id = new URLSearchParams(location.search).get('id')
+  if (!id) { showDetailError('缺少订单 ID'); return }
+  apiClient.get('/bookings/' + id).then(function (booking) {
+    if (!booking) throw new Error('订单不存在')
+    document.getElementById('detailLoading').style.display = 'none'
+    var html =
+      '<div class="detail-card">' +
+      '<h2>订单详情</h2>' +
+      '<div class="detail-row"><span>订单编号</span><span style="font-size:0.8125rem">' + escapeHtml(booking.id) + '</span></div>' +
+      '<div class="detail-row"><span>房源编号</span><span>#' + escapeHtml((booking.listing_id || '').substring(0, 8)) + '</span></div>' +
+      '<div class="detail-row"><span>入住</span><span>' + escapeHtml(booking.check_in) + '</span></div>' +
+      '<div class="detail-row"><span>离店</span><span>' + escapeHtml(booking.check_out) + '</span></div>' +
+      '<div class="detail-row"><span>住客</span><span>' + (booking.guests || '') + '人</span></div>' +
+      '<div class="detail-row"><span>状态</span><span class="badge badge-' + booking.status + '">' + statusLabel(booking.status) + '</span></div>' +
+      '<div class="detail-row"><span>总金额</span><span style="font-weight:700;color:var(--accent)">¥' + (booking.total_price || '') + '</span></div>'
+    if (booking.cancel_reason) {
+      html += '<div class="detail-row"><span>取消原因</span><span style="color:var(--danger)">' + escapeHtml(booking.cancel_reason) + '</span></div>'
     }
-  }
+    html += '<div style="margin-top:var(--space-6);display:flex;gap:var(--space-3)">' +
+      '<a href="/screens/listings/detail.html?id=' + booking.listing_id + '" class="btn btn-outline">查看房源</a>'
+    if (booking.status === 'pending') {
+      html += '<button class="btn btn-danger" id="cancelBtn" onclick="cancelBooking(\'' + booking.id + '\')">取消订单</button>'
+    }
+    html += '</div></div>'
+    document.getElementById('detailContent').innerHTML = html
+    document.getElementById('detailContent').style.display = 'block'
+  }).catch(function (e) {
+    showDetailError(e.message)
+  })
+})
+
+function showDetailError(m) {
+  document.getElementById('detailLoading').style.display = 'none'
+  var e = document.getElementById('detailError')
+  e.textContent = m; e.style.display = 'block'
+}
+
+function cancelBooking(id) {
+  if (!confirm('确定要取消这个订单吗？')) return
+  var btn = document.getElementById('cancelBtn')
+  btn.disabled = true; btn.textContent = '取消中...'
+  apiClient.post('/bookings/' + id + '/cancel', {}).then(function () {
+    location.reload()
+  }).catch(function (e) {
+    alert(e.message || '取消失败'); btn.disabled = false; btn.textContent = '取消订单'
+  })
 }
 </script>
 </body>
