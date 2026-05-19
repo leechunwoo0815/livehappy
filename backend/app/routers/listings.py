@@ -23,6 +23,7 @@ from app.services.listing import (
     update_listing,
 )
 from app.services.listing_photo import add_photo, delete_photo, list_photos
+from app.services.social import get_favorite_status, toggle_favorite
 from app.services.user import get_user_by_id
 
 router = APIRouter()
@@ -34,11 +35,12 @@ async def search(
     min_price: float | None = Query(None, ge=0),
     max_price: float | None = Query(None, ge=0),
     guests: int | None = Query(None, ge=1),
+    sort_by: str | None = Query(None, pattern="^(price_asc|price_desc|newest)$"),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    listings = await search_listings(db, city, min_price, max_price, guests, page, size)
+    listings = await search_listings(db, city, min_price, max_price, guests, page, size, sort_by)
     return BaseResponse(
         success=True,
         data=[ListingResponse.model_validate(lst) for lst in listings],
@@ -112,6 +114,26 @@ async def remove_photo(
 ):
     await delete_photo(db, photo_id, user_id)
     return BaseResponse(success=True, message="已删除")
+
+
+@router.post("/{listing_id}/favorite", response_model=BaseResponse)
+async def favorite(
+    listing_id: str,
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await toggle_favorite(db, user_id, listing_id)
+    return BaseResponse(success=True, data=result)
+
+
+@router.get("/{listing_id}/favorite/status", response_model=BaseResponse)
+async def favorite_status(
+    listing_id: str,
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await get_favorite_status(db, user_id, listing_id)
+    return BaseResponse(success=True, data=result)
 
 
 @router.post("/{listing_id}/approve", response_model=BaseResponse)

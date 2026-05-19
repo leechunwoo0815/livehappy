@@ -67,6 +67,22 @@ async def mark_conversation_read(db: AsyncSession, conversation_id: str, user_id
     await db.commit()
 
 
+async def get_total_unread_count(db: AsyncSession, user_id: str) -> int:
+    result = await db.execute(
+        select(Conversation).where(
+            or_(Conversation.participant_one == user_id, Conversation.participant_two == user_id)
+        )
+    )
+    conversations = result.scalars().all()
+    total = 0
+    for conv in conversations:
+        if user_id == conv.participant_one:
+            total += conv.unread_count_one
+        else:
+            total += conv.unread_count_two
+    return total
+
+
 async def _get_or_create_conversation(db: AsyncSession, user_a: str, user_b: str) -> Conversation:
     result = await db.execute(
         select(Conversation).where(

@@ -83,6 +83,7 @@ async def search_listings(
     guests: int | None = None,
     page: int = 1,
     size: int = 20,
+    sort_by: str | None = None,
 ) -> list[Listing]:
     query = (
         select(Listing)
@@ -97,6 +98,14 @@ async def search_listings(
         query = query.where(Listing.price_per_night <= max_price)
     if guests is not None:
         query = query.where(Listing.max_guests >= guests)
+    if sort_by == "price_asc":
+        query = query.order_by(Listing.price_per_night.asc())
+    elif sort_by == "price_desc":
+        query = query.order_by(Listing.price_per_night.desc())
+    elif sort_by == "newest":
+        query = query.order_by(Listing.created_at.desc())
+    else:
+        query = query.order_by(Listing.created_at.desc())
     query = query.offset((page - 1) * size).limit(size)
     result = await db.execute(query)
     return list(result.scalars().all())

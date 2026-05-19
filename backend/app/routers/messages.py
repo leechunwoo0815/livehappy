@@ -14,6 +14,7 @@ from app.schemas.message import (
 from app.services.message import (
     get_conversations,
     get_messages,
+    get_total_unread_count,
     mark_conversation_read,
     send_message,
 )
@@ -46,6 +47,15 @@ async def list_messages(
         success=True,
         data=[MessageResponse.model_validate(m) for m in messages],
     )
+
+
+@router.get("/unread-count", response_model=BaseResponse)
+async def unread_count(
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    count = await get_total_unread_count(db, user_id)
+    return BaseResponse(success=True, data={"unread_count": count})
 
 
 @router.post("/send", response_model=BaseResponse, status_code=201)

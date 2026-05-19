@@ -13,7 +13,7 @@ from app.schemas.common import BaseResponse
 from app.services.booking import (
     cancel_booking,
     create_booking,
-    get_booking,
+    get_booking_detail,
     get_user_bookings,
     pay_booking,
 )
@@ -50,8 +50,8 @@ async def detail(
     user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    booking = await get_booking(db, booking_id, user_id)
-    return BaseResponse(success=True, data=BookingResponse.model_validate(booking))
+    data = await get_booking_detail(db, booking_id, user_id)
+    return BaseResponse(success=True, data=data)
 
 
 @router.post("/{booking_id}/pay", response_model=BaseResponse)

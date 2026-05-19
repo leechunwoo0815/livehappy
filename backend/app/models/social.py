@@ -35,6 +35,15 @@ class NoteLike(Base, TimestampMixin):
     __table_args__ = (UniqueConstraint("note_id", "user_id", name="uq_note_like"),)
 
 
+class ListingFavorite(Base, TimestampMixin):
+    __tablename__ = "listing_favorites"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    listing_id: Mapped[str] = mapped_column(String(36), index=True)
+    __table_args__ = (UniqueConstraint("user_id", "listing_id", name="uq_listing_favorite"),)
+
+
 class UserFollow(Base, TimestampMixin):
     __tablename__ = "user_follows"
 

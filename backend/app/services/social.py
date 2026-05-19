@@ -4,7 +4,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import BadRequestException, ConflictException, NotFoundException
-from app.models.social import Note, NoteComment, NoteLike, UserFollow
+from app.models.listing import Listing
+from app.models.social import ListingFavorite, Note, NoteComment, NoteLike, UserFollow
 
 
 async def get_note(db: AsyncSession, note_id: str) -> dict:
@@ -143,3 +144,71 @@ async def unfollow_user(db: AsyncSession, user_id: str, target_id: str) -> dict:
     await db.delete(follow)
     await db.commit()
     return {"status": "unfollowed"}
+
+
+async def toggle_favorite(db: AsyncSession, user_id: str, listing_id: str) -> dict:
+    listing = await db.get(Listing, listing_id)
+    if not listing or not listing.is_active:
+        raise NotFoundException("房源不存在")
+    result = await db.execute(
+        text(
+            "INSERT INTO listing_favorites (id, user_id, listing_id) VALUES (:id, :uid, :lid) "
+            "ON CONFLICT (user_id, listing_id) DO NOTHING"
+        ),
+        {"id": str(uuid.uuid4()), "uid": user_id, "lid": listing_id},
+    )
+    if result.rowcount > 0:
+        await db.commit()
+        return {"favorited": True}
+    # Already exists — unfavorite
+    result = await db.execute(
+        select(ListingFavorite).where(
+            ListingFavorite.user_id == user_id, ListingFavorite.listing_id == listing_id
+        )
+    )
+    fav = result.scalar_one_or_none()
+    if fav:
+        await db.delete(fav)
+        await db.commit()
+    return {"favorited": False}
+
+
+async def get_favorite_status(db: AsyncSession, user_id: str, listing_id: str) -> dict:
+    result = await db.execute(
+        select(ListingFavorite).where(
+            ListingFavorite.user_id == user_id, ListingFavorite.listing_id == listing_id
+        )
+    )
+    fav = result.scalar_one_or_none()
+    return {"favorited": fav is not None}
+
+
+async def get_user_favorites(
+    db: AsyncSession, user_id: str, page: int = 1, size: int = 20
+) -> tuple[list[dict], int]:
+    count_result = await db.execute(
+        select(func.count(ListingFavorite.id)).where(ListingFavorite.user_id == user_id)
+    )
+    total = count_result.scalar()
+    result = await db.execute(
+        select(ListingFavorite)
+        .where(ListingFavorite.user_id == user_id)
+        .order_by(ListingFavorite.created_at.desc())
+        .offset((page - 1) * size)
+        .limit(size)
+    )
+    favorites = result.scalars().all()
+    items = []
+    for fav in favorites:
+        listing = await db.get(Listing, fav.listing_id)
+        if listing and listing.is_active:
+            items.append({
+                "id": fav.id,
+                "listing_id": fav.listing_id,
+                "title": listing.title,
+                "city": listing.city,
+                "price_per_night": float(listing.price_per_night),
+                "cover_image": listing.cover_image,
+                "created_at": str(fav.created_at),
+            })
+    return items, total

@@ -131,7 +131,7 @@ async def cancel_booking(
         db,
         notify_user,
         "booking_cancelled",
-        f"订单已取消" + (f"，原因：{reason}" if reason else ""),
+        "订单已取消" + (f"，原因：{reason}" if reason else ""),
         booking_id,
     )
 
@@ -143,6 +143,34 @@ async def get_booking(db: AsyncSession, booking_id: str, user_id: str) -> Bookin
     if user_id not in (booking.guest_id, booking.host_id):
         raise ForbiddenException()
     return booking
+
+
+async def get_booking_detail(db: AsyncSession, booking_id: str, user_id: str) -> dict:
+    booking = await get_booking(db, booking_id, user_id)
+    listing = await db.get(Listing, booking.listing_id)
+    return {
+        "id": booking.id,
+        "listing_id": booking.listing_id,
+        "guest_id": booking.guest_id,
+        "host_id": booking.host_id,
+        "check_in": str(booking.check_in),
+        "check_out": str(booking.check_out),
+        "guests": booking.guests,
+        "total_price": float(booking.total_price),
+        "status": booking.status,
+        "paid_at": str(booking.paid_at) if booking.paid_at else None,
+        "cancelled_at": str(booking.cancelled_at) if booking.cancelled_at else None,
+        "cancel_reason": booking.cancel_reason,
+        "created_at": str(booking.created_at),
+        "listing": {
+            "id": listing.id,
+            "title": listing.title,
+            "city": listing.city,
+            "address": listing.address,
+            "price_per_night": float(listing.price_per_night),
+            "cover_image": listing.cover_image,
+        } if listing else None,
+    }
 
 
 async def get_user_bookings(db: AsyncSession, user_id: str, role: str = "guest") -> list[Booking]:
