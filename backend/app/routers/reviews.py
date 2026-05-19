@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.schemas.common import BaseResponse
-from app.services.review import create_review, list_reviews
+from app.services.review import create_review, list_reviews, reply_to_review
 
 router = APIRouter()
 
@@ -26,3 +26,14 @@ async def create(
 async def list(listing_id: str, db: AsyncSession = Depends(get_db)):
     reviews = await list_reviews(db, listing_id)
     return BaseResponse(success=True, data=reviews)
+
+
+@router.post("/{review_id}/reply", response_model=BaseResponse)
+async def reply(
+    review_id: str,
+    reply: str = Body(..., embed=True),
+    user_id: str = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await reply_to_review(db, review_id, user_id, reply)
+    return BaseResponse(success=True, data=result)

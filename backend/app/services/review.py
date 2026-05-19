@@ -1,8 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import BadRequestException, ConflictException, ForbiddenException
+from app.core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    ForbiddenException,
+    NotFoundException,
+)
 from app.models.booking import Booking
+from app.models.listing import Listing
 from app.models.review import Review
 
 
@@ -52,3 +58,18 @@ async def list_reviews(db: AsyncSession, listing_id: str) -> list[dict]:
         }
         for r in result.scalars().all()
     ]
+
+
+async def reply_to_review(db: AsyncSession, review_id: str, host_id: str, reply: str) -> dict:
+    review = await db.get(Review, review_id)
+    if not review:
+        raise NotFoundException()
+    listing = await db.get(Listing, review.listing_id)
+    if not listing or listing.host_id != host_id:
+        raise ForbiddenException()
+    if review.reply:
+        raise BadRequestException("已回复，不可重复回复")
+    review.reply = reply
+    await db.commit()
+    await db.refresh(review)
+    return {"id": review.id, "reply": review.reply}
