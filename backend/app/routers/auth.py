@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Body, Depends, Request
 from jose import JWTError, jwt
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -42,14 +41,15 @@ from app.services.auth import (
     store_refresh_token,
     verify_password,
 )
+from app.services.user import get_user_by_email, get_user_by_id
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=BaseResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).where(User.email == data.email))
-    if existing.scalar_one_or_none():
+    existing = await get_user_by_email(db, data.email)
+    if existing:
         raise ConflictException("邮箱已注册")
 
     user = User(
@@ -91,8 +91,7 @@ async def login(
     if attempts > settings.login_rate_limit:
         raise RateLimitException("登录尝试过于频繁，请稍后再试")
 
-    result = await db.execute(select(User).where(User.email == data.email))
-    user = result.scalar_one_or_none()
+    user = await get_user_by_email(db, data.email)
     if not user or not verify_password(data.password, user.password_hash):
         raise UnauthorizedException("邮箱或密码错误")
 
@@ -168,10 +167,7 @@ async def get_me(
     current_user_id: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(User).where(User.id == current_user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException()
+    user = await get_user_by_id(db, current_user_id)
     return BaseResponse(success=True, data=UserResponseSchema.model_validate(user))
 
 
@@ -180,8 +176,7 @@ async def forgot_password(
     email: str = Body(..., embed=True),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    user = await get_user_by_email(db, email)
     if not user:
         raise NotFoundException("该邮箱未注册")
 
@@ -207,9 +202,7 @@ async def reset_password(
     if not user_id:
         raise BadRequestException("重置链接已失效")
 
-    user = await db.get(User, user_id)
-    if not user:
-        raise NotFoundException()
+    user = await get_user_by_id(db, user_id)
 
     user.password_hash = hash_password(new_password)
     await db.commit()
