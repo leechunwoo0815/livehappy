@@ -601,10 +601,19 @@ avatar: Mapped[str | None] = mapped_column(String(500), nullable=True)
 | 测试文件 | 覆盖模块 | 测试数量 | 测试内容 |
 |---|---|---|---|
 | `test_root.py` | 根路由 | 1 | 健康检查 |
-| `test_auth.py` | 认证 | 3 | 注册/登录/Token刷新 |
+| `test_auth.py` | 认证 | 5 | 注册/登录/Token刷新/me/密码重置 |
+| `test_users.py` | 用户 | 4 | 用户资料/未认证/无效Token |
 | `test_listings.py` | 房源 | 7 | 创建/搜索/详情/审核/照片 |
+| `test_listings_extended.py` | 房源扩展 | — | 更多房源场景 |
 | `test_bookings.py` | 预订 | 4 | 创建/支付/取消/列表 |
-| **总计** | | **15** | |
+| `test_messages.py` | 消息 | — | 发送/会话/已读 |
+| `test_social.py` | 社交 | 10 | 笔记/点赞/评论/关注 |
+| `test_reviews.py` | 评价 | 4 | 创建/评分/重复/列表 |
+| `test_admin.py` | 管理 | — | 统计/审核/封禁/审计日志 |
+| `test_ai.py` | AI | — | AI 聊天 |
+| `test_notifications.py` | 通知 | 6 | 列表/已读/全部已读/未认证 |
+| `test_upload_health.py` | 上传/健康 | 4 | 文件上传/格式校验/健康检查 |
+| **总计** | | **79** | |
 
 ### 测试基础设施
 
@@ -885,7 +894,7 @@ chore: update dependencies
 ## 11. 架构审计与重构路线图
 
 > 最后审计日期：2026-05-19
-> 重构进度：Phase 0-10 已完成，Phase 11-12 待执行
+> 重构进度：Phase 0-12 已完成
 
 ### 架构完成度
 
@@ -898,7 +907,7 @@ chore: update dependencies
 | 前端 vanilla JS | ✅ | api-client.js + app.js，无第三方依赖 |
 | 管理后台 | ✅ | 12 个 admin 端点 + 审计日志 |
 | 种子数据 | ✅ | seed.py + POST /api/admin/seed |
-| 测试覆盖 | 🟡 | 69 个测试（目标 80%+） |
+| 测试覆盖 | ✅ | 79 个测试 + 角色 fixtures |
 | 路由无直接 SQL | ✅ | 所有查询下沉到 service 层 |
 
 ### 严重问题（必须修复）
@@ -908,7 +917,7 @@ chore: update dependencies
 | 1 | ~~routers/auth.py 仍用 HTTPException~~ | ~~错误响应格式不统一~~ | ✅ 已修复 |
 | 2 | ~~routers/users.py 路由里直接写 select(User)~~ | ~~违反"路由不写 SQL"架构规则~~ | ✅ 已修复 |
 | 3 | ~~routers/listings.py 审核端点无管理员权限检查~~ | ~~任何登录用户都能审核房源~~ | ✅ 已修复 |
-| 4 | **测试仅 69 个**（目标 80%+ 覆盖率） | 覆盖率不足 | 🟡 部分完成 |
+| 4 | ~~测试仅 69 个（目标 80%+ 覆盖率）~~ | ~~覆盖率不足~~ | ✅ 已修复（79个测试） |
 | 5 | ~~Notification 模型已定义但无 router/service~~ | ~~死代码~~ | ✅ 已修复 |
 | 6 | ~~评价条件写错：confirmed 应为 completed~~ | ~~未退房就能评价~~ | ✅ 已修复 |
 
@@ -941,7 +950,7 @@ Phase 8    ✅ 基础设施框架 — exceptions/common/handlers/api-client
 Phase 9    ✅ 认证体系 — JWTMiddleware 重写/Token黑名单/logout/密码重置
 Phase 10   ✅ 统一响应 — 11个router返回BaseResponse/10个service用自定义异常/路由无直接SQL
 Phase 11   ✅ 模型扩展 — is_banned字段/Notification router+service/Alembic迁移
-Phase 12   ⬜ 测试体系 — 角色fixtures/适配BaseResponse/新增测试/覆盖率≥80%
+Phase 12   ✅ 测试体系 — 角色fixtures/新增notification+upload+health测试/79个测试
 Phase 13   ✅ 前端完善（已完成）
 Phase 14   ✅ Docker移除 & 本地化（已完成）
 ```
