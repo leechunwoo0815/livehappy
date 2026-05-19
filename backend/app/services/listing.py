@@ -1,9 +1,10 @@
-from fastapi import HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.models.listing import Listing
+from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
 
 
@@ -23,7 +24,7 @@ async def get_listing(db: AsyncSession, listing_id: str) -> Listing:
     )
     listing = result.scalar_one_or_none()
     if not listing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     return listing
 
 
@@ -62,9 +63,11 @@ async def update_listing(
     )
     listing = result.scalar_one_or_none()
     if not listing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if listing.host_id != host_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        user = await db.get(User, host_id)
+        if not user or user.role != "admin":
+            raise ForbiddenException()
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(listing, key, value)
     await db.commit()
@@ -72,21 +75,33 @@ async def update_listing(
     return listing
 
 
-async def delete_listing(db: AsyncSession, listing_id: str, host_id: str):
+async def delete_listing(db: AsyncSession, listing_id: str, host_id: str) -> None:
     listing = await db.get(Listing, listing_id)
     if not listing:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if listing.host_id != host_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        user = await db.get(User, host_id)
+        if not user or user.role != "admin":
+            raise ForbiddenException()
     listing.is_active = False
     await db.commit()
 
 
-async def approve_listing(db: AsyncSession, listing_id: str):
-    await db.execute(update(Listing).where(Listing.id == listing_id).values(status="approved"))
+async def approve_listing(db: AsyncSession, listing_id: str) -> None:
+    listing = await db.get(Listing, listing_id)
+    if not listing:
+        raise NotFoundException()
+    if listing.status != "pending":
+        raise BadRequestException("只能审核待审核的房源")
+    listing.status = "approved"
     await db.commit()
 
 
-async def reject_listing(db: AsyncSession, listing_id: str):
-    await db.execute(update(Listing).where(Listing.id == listing_id).values(status="rejected"))
+async def reject_listing(db: AsyncSession, listing_id: str) -> None:
+    listing = await db.get(Listing, listing_id)
+    if not listing:
+        raise NotFoundException()
+    if listing.status != "pending":
+        raise BadRequestException("只能审核待审核的房源")
+    listing.status = "rejected"
     await db.commit()

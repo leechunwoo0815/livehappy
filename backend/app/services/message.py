@@ -1,7 +1,8 @@
-from fastapi import HTTPException, status
 from sqlalchemy import or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ForbiddenException, NotFoundException
 from app.models.message import Conversation, Message
 
 
@@ -33,9 +34,9 @@ async def get_conversations(db: AsyncSession, user_id: str) -> list[Conversation
 async def get_messages(db: AsyncSession, conversation_id: str, user_id: str) -> list[Message]:
     conv = await db.get(Conversation, conversation_id)
     if not conv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if user_id not in (conv.participant_one, conv.participant_two):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise ForbiddenException()
     result = await db.execute(
         select(Message)
         .where(Message.conversation_id == conversation_id)
@@ -44,12 +45,12 @@ async def get_messages(db: AsyncSession, conversation_id: str, user_id: str) -> 
     return list(result.scalars().all())
 
 
-async def mark_conversation_read(db: AsyncSession, conversation_id: str, user_id: str):
+async def mark_conversation_read(db: AsyncSession, conversation_id: str, user_id: str) -> None:
     conv = await db.get(Conversation, conversation_id)
     if not conv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if user_id not in (conv.participant_one, conv.participant_two):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise ForbiddenException()
     await db.execute(
         update(Message)
         .where(
@@ -80,6 +81,21 @@ async def _get_or_create_conversation(db: AsyncSession, user_a: str, user_b: str
         return conv
     conv = Conversation(participant_one=user_a, participant_two=user_b)
     db.add(conv)
-    await db.commit()
-    await db.refresh(conv)
+    try:
+        await db.commit()
+        await db.refresh(conv)
+    except IntegrityError:
+        await db.rollback()
+        # Another request created the conversation concurrently — fetch it
+        result = await db.execute(
+            select(Conversation).where(
+                or_(
+                    (Conversation.participant_one == user_a)
+                    & (Conversation.participant_two == user_b),
+                    (Conversation.participant_one == user_b)
+                    & (Conversation.participant_two == user_a),
+                )
+            )
+        )
+        conv = result.scalar_one()
     return conv

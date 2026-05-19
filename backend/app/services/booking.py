@@ -1,10 +1,15 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    BadRequestException,
+    ConflictException,
+    ForbiddenException,
+    NotFoundException,
+)
 from app.models.booking import Booking, Payment
 from app.models.listing import Listing
 from app.schemas.booking import BookingCreate
@@ -14,17 +19,27 @@ PLATFORM_FEE_RATE = Decimal("0.10")
 
 async def create_booking(db: AsyncSession, guest_id: str, data: BookingCreate) -> Booking:
     if data.check_in >= data.check_out:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="入住日期必须早于退房日期"
-        )
+        raise BadRequestException("入住日期必须早于退房日期")
     if data.check_in < date.today():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="不能预订过去的日期")
+        raise BadRequestException("不能预订过去的日期")
 
     listing = await db.get(Listing, data.listing_id)
     if not listing or not listing.is_active or listing.status != "approved":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="房源不存在或不可预订")
+        raise NotFoundException("房源不存在或不可预订")
     if data.guests > listing.max_guests:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="超出最大入住人数")
+        raise BadRequestException("超出最大入住人数")
+
+    # Check for overlapping bookings on the same listing
+    overlap = await db.execute(
+        select(Booking).where(
+            Booking.listing_id == data.listing_id,
+            Booking.status.in_(["pending", "confirmed"]),
+            Booking.check_in < data.check_out,
+            Booking.check_out > data.check_in,
+        )
+    )
+    if overlap.scalar_one_or_none():
+        raise ConflictException("该房源在所选日期已被预订")
 
     nights = (data.check_out - data.check_in).days
     total_price = Decimal(str(listing.price_per_night)) * Decimal(nights)
@@ -46,11 +61,12 @@ async def create_booking(db: AsyncSession, guest_id: str, data: BookingCreate) -
 
 
 async def pay_booking(db: AsyncSession, booking_id: str, user_id: str) -> Payment:
-    booking = await db.get(Booking, booking_id)
+    result = await db.execute(select(Booking).where(Booking.id == booking_id).with_for_update())
+    booking = result.scalar_one_or_none()
     if not booking or booking.guest_id != user_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if booking.status != "pending":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="订单状态不允许支付")
+        raise BadRequestException("订单状态不允许支付")
 
     amount = booking.total_price
     platform_fee = (amount * PLATFORM_FEE_RATE).quantize(Decimal("0.01"))
@@ -75,14 +91,14 @@ async def pay_booking(db: AsyncSession, booking_id: str, user_id: str) -> Paymen
 
 async def cancel_booking(
     db: AsyncSession, booking_id: str, user_id: str, reason: str | None = None
-):
+) -> None:
     booking = await db.get(Booking, booking_id)
     if not booking:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise NotFoundException()
     if user_id not in (booking.guest_id, booking.host_id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+        raise ForbiddenException()
     if booking.status in ("cancelled", "completed"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="订单已结束")
+        raise BadRequestException("订单已结束")
 
     was_confirmed = booking.status == "confirmed"
     booking.status = "cancelled"
@@ -91,7 +107,7 @@ async def cancel_booking(
 
     if was_confirmed:
         payment = await _get_payment(db, booking_id)
-        if payment:
+        if payment and payment.status == "paid":
             payment.status = "refunded"
             payment.refunded_at = booking.cancelled_at
             payment.amount = Decimal("0")
@@ -99,6 +115,15 @@ async def cancel_booking(
             payment.platform_fee = Decimal("0")
 
     await db.commit()
+
+
+async def get_booking(db: AsyncSession, booking_id: str, user_id: str) -> Booking:
+    booking = await db.get(Booking, booking_id)
+    if not booking:
+        raise NotFoundException()
+    if user_id not in (booking.guest_id, booking.host_id):
+        raise ForbiddenException()
+    return booking
 
 
 async def get_user_bookings(db: AsyncSession, user_id: str, role: str = "guest") -> list[Booking]:

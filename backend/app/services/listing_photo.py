@@ -35,7 +35,7 @@ async def add_photo(
     return photo
 
 
-async def delete_photo(db: AsyncSession, photo_id: str, user_id: str):
+async def delete_photo(db: AsyncSession, photo_id: str, user_id: str) -> None:
     result = await db.execute(select(ListingPhoto).where(ListingPhoto.id == photo_id))
     photo = result.scalar_one_or_none()
     if not photo:
@@ -47,10 +47,10 @@ async def delete_photo(db: AsyncSession, photo_id: str, user_id: str):
     await db.commit()
 
 
-async def _unset_primary(db: AsyncSession, listing_id: str):
+async def _unset_primary(db: AsyncSession, listing_id: str) -> None:
     await db.execute(
         update(ListingPhoto)
         .where(ListingPhoto.listing_id == listing_id, ListingPhoto.is_primary.is_(True))
         .values(is_primary=False)
     )
-    await db.commit()
+    await db.flush()

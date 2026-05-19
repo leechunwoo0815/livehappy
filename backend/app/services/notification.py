@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ForbiddenException, NotFoundException
@@ -23,8 +23,6 @@ async def get_user_notifications(
 
 
 async def get_unread_count(db: AsyncSession, user_id: str) -> int:
-    from sqlalchemy import func
-
     result = await db.execute(
         select(func.count(Notification.id)).where(
             Notification.user_id == user_id, Notification.is_read.is_(False)
